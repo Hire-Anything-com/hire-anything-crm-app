@@ -51,6 +51,11 @@
 	<string>We need camera access to take photos of completed tasks.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>We need photo library access to upload proof of completed tasks.</string>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>comgooglemaps</string>
+		<string>maps</string>
+	</array>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

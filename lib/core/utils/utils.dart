@@ -1,3 +1,4 @@
+export 'cloudinary_service.dart';
 export 'debug_logger.dart';
 export 'formatter_utils.dart';
 export 'typedefs.dart';

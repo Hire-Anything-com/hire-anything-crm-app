@@ -13,10 +13,10 @@ class DioClient {
   /// Initializes the Dio client with base configuration and interceptors
   static Future<void> initialize({
     required String baseUrl,
-    Duration connectTimeout = const Duration(seconds: 30),
-    Duration receiveTimeout = const Duration(seconds: 30),
     required Future<String?> Function() getAccessToken,
     required Future<bool> Function() onTokenRefresh,
+    Duration connectTimeout = const Duration(seconds: 30),
+    Duration receiveTimeout = const Duration(seconds: 30),
   }) async {
     _instance
       ..options = BaseOptions(

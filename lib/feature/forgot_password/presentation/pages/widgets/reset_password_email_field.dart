@@ -8,18 +8,16 @@ import 'package:hireanythingbooking/core/theme/app_typography.dart';
 
 /// Email input field widget for reset password email page
 class ResetPasswordEmailField extends StatelessWidget {
-  final TextEditingController controller;
-  final FocusNode focusNode;
-  final String? Function(String?)? validator;
-  final Function(String)? onChanged;
 
   const ResetPasswordEmailField({
-    super.key,
-    required this.controller,
-    required this.focusNode,
+    required this.controller, required this.focusNode, super.key,
     this.validator,
     this.onChanged,
   });
+  final TextEditingController controller;
+  final FocusNode focusNode;
+  final String? Function(String?)? validator;
+  final void Function(String)? onChanged;
 
   @override
   Widget build(BuildContext context) {

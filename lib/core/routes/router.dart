@@ -4,11 +4,11 @@ import 'package:go_router/go_router.dart';
 import 'package:hireanythingbooking/core/di/service_locator.dart';
 import 'package:hireanythingbooking/core/routes/route_observer.dart';
 import 'package:hireanythingbooking/core/routes/routes.dart';
+import 'package:hireanythingbooking/feature/dashboard/presentation/cubit/dashboard_cubit.dart';
+import 'package:hireanythingbooking/feature/dashboard/presentation/pages/dashboard_page.dart';
 import 'package:hireanythingbooking/feature/forgot_password/domain/usecases/forgot_password_usecase.dart';
 import 'package:hireanythingbooking/feature/forgot_password/presentation/presentation.dart';
 import 'package:hireanythingbooking/feature/login/presentation/presentation.dart';
-import 'package:hireanythingbooking/feature/dashboard/cubit/dashboard_cubit.dart';
-import 'package:hireanythingbooking/feature/dashboard/pages/dashboard_page.dart';
 import 'package:hireanythingbooking/feature/splash/cubit/splash_cubit.dart';
 import 'package:hireanythingbooking/feature/splash/pages/splash_page.dart';
 
@@ -130,3 +130,4 @@ class AppRouter {
     ],
   );
 }
+

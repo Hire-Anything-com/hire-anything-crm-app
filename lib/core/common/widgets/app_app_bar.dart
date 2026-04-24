@@ -21,14 +21,12 @@ class AppAppBar extends StatelessWidget implements PreferredSizeWidget {
   final bool centerTitle;
 
   @override
-  Size get preferredSize => Size.fromHeight(
-    kToolbarHeight + (bottom?.preferredSize.height ?? 0),
-  );
+  Size get preferredSize =>
+      Size.fromHeight(kToolbarHeight + (bottom?.preferredSize.height ?? 0));
 
   @override
   Widget build(BuildContext context) {
-    final hasBackButton =
-        leading == null && Navigator.of(context).canPop();
+    final hasBackButton = leading == null && Navigator.of(context).canPop();
 
     return Container(
       decoration: const BoxDecoration(
@@ -43,13 +41,15 @@ class AppAppBar extends StatelessWidget implements PreferredSizeWidget {
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         centerTitle: centerTitle,
-        leading: leading ?? (hasBackButton
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back_ios_rounded, size: 20),
-                color: AppColors.textWhite,
-                onPressed: () => Navigator.of(context).pop(),
-              )
-            : null),
+        leading:
+            leading ??
+            (hasBackButton
+                ? IconButton(
+                    icon: const Icon(Icons.arrow_back_ios_rounded, size: 20),
+                    color: AppColors.textWhite,
+                    onPressed: () => Navigator.of(context).pop(),
+                  )
+                : null),
         title: Text(title),
         titleTextStyle: AppTypography.titleLarge.copyWith(
           color: AppColors.textWhite,

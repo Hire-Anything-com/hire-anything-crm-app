@@ -12,6 +12,8 @@ class AppConstants {
   static const String logoutEndpoint = '/api/v1/auth/logout';
   static const String forgotPasswordEndpoint = '/api/v1/auth/forgot-password';
   static const String resetPasswordEndpoint = '/api/v1/auth/reset-password';
+  static const String myAssignmentsEndpoint = '/api/v1/tasks/my-assignments';
+  static const String taskAssignmentsEndpoint = '/api/v1/tasks/assignments';
 
   // Dummy credentials (mutable password for forgot password flow)
   static const String dummyEmail = 'khanfeshan2324@gmail.com';

@@ -38,8 +38,8 @@ class LoginCubit extends Cubit<LoginState> {
   /// Initialize debug values for testing in debug mode
   void _initializeDebugValues() {
     if (kDebugMode) {
-      emailController.text = 'Khanfeshan2324@gmail.com';
-      passwordController.text = 'Test@123';
+      emailController.text = 'khanfeshan2324@gmail.com';
+      passwordController.text = 'Test@1234';
       DebugLogger.auth('Debug mode: Pre-filled email and password');
     }
   }

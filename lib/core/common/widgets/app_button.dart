@@ -34,7 +34,19 @@ class AppButton extends StatefulWidget {
 }
 
 class _AppButtonState extends State<AppButton> {
-  bool _isPressed = false;
+  late final ValueNotifier<bool> _isPressed;
+
+  @override
+  void initState() {
+    super.initState();
+    _isPressed = ValueNotifier<bool>(false);
+  }
+
+  @override
+  void dispose() {
+    _isPressed.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -61,41 +73,46 @@ class _AppButtonState extends State<AppButton> {
 
     final darkerColor = Color.lerp(btnColor, AppColors.black, 0.18)!;
 
-    return GestureDetector(
-      onTapDown: isDisabled ? null : (_) => setState(() => _isPressed = true),
-      onTapUp: isDisabled
-          ? null
-          : (_) {
-              setState(() => _isPressed = false);
-              widget.onPressed?.call();
-            },
-      onTapCancel: isDisabled ? null : () => setState(() => _isPressed = false),
-      child: AnimatedScale(
-        scale: _isPressed ? 0.97 : 1.0,
-        duration: const Duration(milliseconds: 120),
-        curve: Curves.easeInOut,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 120),
-          width: widget.width ?? double.infinity,
-          height: widget.height,
-          decoration: BoxDecoration(
-            gradient: isDisabled
-                ? null
-                : LinearGradient(
-                    colors: [btnColor, darkerColor],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-            color: isDisabled ? AppColors.disabledBtnColor : null,
-            borderRadius: BorderRadius.circular(widget.borderRadius),
-          ),
-          child: Center(
-            child: _buildChild(
-              isDisabled ? AppColors.disabledBtnText : fgColor,
+    return ValueListenableBuilder<bool>(
+      valueListenable: _isPressed,
+      builder: (context, isPressed, _) {
+        return GestureDetector(
+          onTapDown: isDisabled ? null : (_) => _isPressed.value = true,
+          onTapUp: isDisabled
+              ? null
+              : (_) {
+                  _isPressed.value = false;
+                  widget.onPressed?.call();
+                },
+          onTapCancel: isDisabled ? null : () => _isPressed.value = false,
+          child: AnimatedScale(
+            scale: isPressed ? 0.97 : 1.0,
+            duration: const Duration(milliseconds: 120),
+            curve: Curves.easeInOut,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 120),
+              width: widget.width ?? double.infinity,
+              height: widget.height,
+              decoration: BoxDecoration(
+                gradient: isDisabled
+                    ? null
+                    : LinearGradient(
+                        colors: [btnColor, darkerColor],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                color: isDisabled ? AppColors.disabledBtnColor : null,
+                borderRadius: BorderRadius.circular(widget.borderRadius),
+              ),
+              child: Center(
+                child: _buildChild(
+                  isDisabled ? AppColors.disabledBtnText : fgColor,
+                ),
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
