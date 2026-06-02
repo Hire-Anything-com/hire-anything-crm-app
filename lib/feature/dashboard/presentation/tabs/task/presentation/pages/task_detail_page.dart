@@ -7,112 +7,246 @@ import 'package:hireanythingbooking/core/utils/debug_logger.dart';
 import 'package:hireanythingbooking/core/extension/date_time_ext.dart';
 import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/presentation/cubit/task_cubit.dart';
 import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/presentation/cubit/task_state.dart';
+import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/data/model/assignment_detail_model.dart';
 import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/data/model/task_model.dart';
 import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/presentation/pages/task_photo_page.dart';
+import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/presentation/pages/task_otp_page.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class TaskDetailPage extends StatelessWidget {
+class TaskDetailPage extends StatefulWidget {
   const TaskDetailPage({required this.taskId, super.key});
   final String taskId;
+
+  @override
+  State<TaskDetailPage> createState() => _TaskDetailPageState();
+}
+
+class _TaskDetailPageState extends State<TaskDetailPage> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.taskId.isNotEmpty) {
+        context.read<TaskCubit>().fetchAssignmentDetails(widget.taskId);
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<TaskCubit, TaskState>(
       listenWhen: (prev, curr) => prev.isTimerRunning && !curr.isTimerRunning,
-      listener: (context, state) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute<void>(
-            builder: (_) => BlocProvider.value(
-              value: context.read<TaskCubit>(),
-              child: const TaskPhotoPage(),
+      listener: (context, state) async {
+        // When timer stops, navigate to photo screen if photos are required.
+        // Otherwise call the photos API with empty payload and proceed to OTP/completion.
+        final cubit = context.read<TaskCubit>();
+        final assignment = state.selectedAssignment;
+        final requirePhotos = assignment?.task?.requirePhotos ?? false;
+        final requireOtp = assignment?.task?.requireOtp ?? false;
+
+        final navigator = Navigator.of(context);
+
+        if (requirePhotos) {
+          navigator.pushReplacement(
+            MaterialPageRoute<void>(
+              builder: (_) => BlocProvider.value(
+                value: cubit,
+                child: const TaskPhotoPage(),
+              ),
             ),
-          ),
+          );
+          return;
+        }
+
+        // Photos not required — call photos API with empty list
+        final startTime =
+            state.taskStartTimeEpoch ??
+            DateTime.now().millisecondsSinceEpoch ~/ 1000;
+        final endTime =
+            state.taskEndTimeEpoch ??
+            DateTime.now().millisecondsSinceEpoch ~/ 1000;
+        final photosOk = await cubit.submitPhotosSkippingUI(
+          startTime: startTime,
+          endTime: endTime,
         );
+        if (!photosOk) {
+          AppSnackBar.show(
+            context,
+            message: 'Failed submitting photos',
+            type: SnackBarType.error,
+          );
+          return;
+        }
+
+        // If OTP required, navigate to OTP page; otherwise complete with empty otp
+        if (requireOtp) {
+          navigator.pushReplacement(
+            MaterialPageRoute<void>(
+              builder: (_) =>
+                  BlocProvider.value(value: cubit, child: const TaskOtpPage()),
+            ),
+          );
+          return;
+        }
+
+        // Neither photos nor OTP required — complete task by sending empty otp
+        final completed = await cubit.verifyOtp('');
+        if (completed) {
+          AppSnackBar.show(
+            context,
+            message: 'Task completed successfully!',
+            type: SnackBarType.success,
+          );
+          navigator.popUntil((route) => route.isFirst);
+        }
       },
       builder: (context, state) {
-        final task = state.tasks.firstWhere(
-          (t) => t.id == taskId,
-          orElse: () => const TaskModel(),
-        );
-        final isActive = state.activeTaskId == taskId;
+        final assignment =
+            state.selectedAssignment ?? const AssignmentDetailModel();
+        // Show loader while fetching assignment details for this page id
+        if (state.isLoading &&
+            (state.selectedAssignment == null ||
+                state.selectedAssignment!.id != widget.taskId)) {
+          return Scaffold(
+            appBar: const AppAppBar(title: 'Task Details'),
+            body: const Center(child: CircularProgressIndicator()),
+          );
+        }
+        final isActive = state.activeTaskId == widget.taskId;
 
-        return Scaffold(
-          appBar: const AppAppBar(title: 'Task Details'),
-          body: SingleChildScrollView(
-            padding: AppSpacing.p16.copyWith(
-              bottom: 16 + MediaQuery.of(context).padding.bottom + 24,
+        TaskStatus _parseStatus(String? value) {
+          switch (value?.toUpperCase()) {
+            case 'ACCEPTED':
+              return TaskStatus.accepted;
+            case 'IN_PROGRESS':
+              return TaskStatus.inProgress;
+            case 'COMPLETED':
+              return TaskStatus.completed;
+            case 'CANCELLED':
+              return TaskStatus.cancelled;
+            case 'ASSIGNED':
+            default:
+              return TaskStatus.assigned;
+          }
+        }
+
+        final statusEnum = _parseStatus(assignment.status);
+
+        return Stack(
+          children: [
+            Scaffold(
+              appBar: const AppAppBar(title: 'Task Details'),
+              body: SingleChildScrollView(
+                padding: AppSpacing.p16.copyWith(
+                  bottom: 16 + MediaQuery.of(context).padding.bottom + 24,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Task Info Card
+                    _TaskInfoCard(assignment: assignment, status: statusEnum),
+
+                    AppSpacing.h24,
+
+                    // Timer Section (only if task is in-progress)
+                    if (isActive && state.isTimerRunning) ...[
+                      _TimerSection(
+                        timerDisplay: state.timerDisplay,
+                        remainingSeconds: state.remainingSeconds,
+                        totalSeconds:
+                            (assignment.task?.estimateMinutes ?? 0) * 60,
+                        isOvertime: state.isOvertime,
+                        overtimeSeconds: state.overtimeSeconds,
+                      ),
+                      AppSpacing.h24,
+                      SizedBox(
+                        width: double.infinity,
+                        child: AppButton(
+                          text: 'Stop & Complete',
+                          backgroundColor: AppColors.secondary,
+                          onPressed: () {
+                            // Only stop timer here — navigation/next-steps handled
+                            // by the BlocConsumer listener (so we can conditionally
+                            // skip photo/OTP screens based on assignment flags).
+                            context.read<TaskCubit>().stopTimer();
+                          },
+                        ),
+                      ),
+                    ],
+
+                    // Start Button (only if assigned but not started yet)
+                    if (statusEnum == TaskStatus.assigned && !isActive) ...[
+                      AppSpacing.h24,
+                      SizedBox(
+                        width: double.infinity,
+                        child: AppButton(
+                          text: 'Start Task',
+                          backgroundColor: AppColors.primary,
+                          onPressed: () =>
+                              _handleStartTask(context, widget.taskId),
+                        ),
+                      ),
+                    ],
+
+                    // Continue Button (for accepted tasks not yet started)
+                    if (statusEnum == TaskStatus.accepted && !isActive) ...[
+                      AppSpacing.h24,
+                      SizedBox(
+                        width: double.infinity,
+                        child: AppButton(
+                          text: 'Continue',
+                          backgroundColor: AppColors.primary,
+                          onPressed: () =>
+                              _handleStartTask(context, widget.taskId),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Task Info Card
-                _TaskInfoCard(task: task),
 
-                AppSpacing.h24,
-
-                // Payment Info Card
-                _PaymentInfoCard(task: task),
-
-                AppSpacing.h24,
-
-                // Timer Section (only if task is in-progress)
-                if (isActive && state.isTimerRunning) ...[
-                  _TimerSection(
-                    timerDisplay: state.timerDisplay,
-                    remainingSeconds: state.remainingSeconds,
-                    totalSeconds: task.durationMinutes * 60,
-                    isOvertime: state.isOvertime,
-                    overtimeSeconds: state.overtimeSeconds,
-                  ),
-                  AppSpacing.h24,
-                  SizedBox(
-                    width: double.infinity,
-                    child: AppButton(
-                      text: 'Stop & Complete',
-                      backgroundColor: AppColors.secondary,
-                      onPressed: () {
-                        context.read<TaskCubit>().stopTimer();
-                        Navigator.of(context).pushReplacement(
-                          MaterialPageRoute<void>(
-                            builder: (_) => BlocProvider.value(
-                              value: context.read<TaskCubit>(),
-                              child: const TaskPhotoPage(),
+            // Background processing overlay when photos/otp calls are running
+            if (state.isUploadingPhotos || state.isCompletingTask)
+              Positioned.fill(
+                child: Container(
+                  color: Colors.black45,
+                  child: Center(
+                    child: Container(
+                      padding: const EdgeInsets.all(20),
+                      margin: const EdgeInsets.symmetric(horizontal: 40),
+                      decoration: BoxDecoration(
+                        color: AppColors.white,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const SizedBox(
+                            width: 48,
+                            height: 48,
+                            child: CircularProgressIndicator(),
+                          ),
+                          AppSpacing.h12,
+                          Text(
+                            state.isUploadingPhotos
+                                ? 'Submitting photos...'
+                                : state.isCompletingTask
+                                ? 'Completing task...'
+                                : 'Processing...',
+                            textAlign: TextAlign.center,
+                            style: AppTypography.titleMedium.copyWith(
+                              color: AppColors.textPrimary,
+                              decoration: TextDecoration.none,
                             ),
                           ),
-                        );
-                      },
+                        ],
+                      ),
                     ),
                   ),
-                ],
-
-                // Start Button (only if assigned but not started yet)
-                if (task.status == TaskStatus.assigned && !isActive) ...[
-                  AppSpacing.h24,
-                  SizedBox(
-                    width: double.infinity,
-                    child: AppButton(
-                      text: 'Start Task',
-                      backgroundColor: AppColors.primary,
-                      onPressed: () => _handleStartTask(context, taskId),
-                    ),
-                  ),
-                ],
-
-                // Continue Button (for accepted tasks not yet started)
-                if (task.status == TaskStatus.accepted && !isActive) ...[
-                  AppSpacing.h24,
-                  SizedBox(
-                    width: double.infinity,
-                    child: AppButton(
-                      text: 'Continue',
-                      backgroundColor: AppColors.primary,
-                      onPressed: () => _handleStartTask(context, taskId),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
+                ),
+              ),
+          ],
         );
       },
     );
@@ -128,7 +262,7 @@ class TaskDetailPage extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          title: Row(
+          title: const Row(
             children: [
               Icon(
                 Icons.warning_amber_rounded,
@@ -136,7 +270,7 @@ class TaskDetailPage extends StatelessWidget {
                 size: 28,
               ),
               AppSpacing.w8,
-              const Text('Early Start'),
+              Text('Early Start'),
             ],
           ),
           content: const Text(
@@ -167,8 +301,9 @@ class TaskDetailPage extends StatelessWidget {
 // ─── Task Info Card ──────────────────────────────────────────────────────────
 
 class _TaskInfoCard extends StatelessWidget {
-  const _TaskInfoCard({required this.task});
-  final TaskModel task;
+  const _TaskInfoCard({required this.assignment, required this.status});
+  final AssignmentDetailModel assignment;
+  final TaskStatus status;
 
   Future<void> _openInMap(String postCode) async {
     final query = Uri.encodeComponent(postCode);
@@ -197,6 +332,7 @@ class _TaskInfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final detail = assignment.task;
     return Card(
       shadowColor: AppColors.disabledBtnText,
       child: Padding(
@@ -208,30 +344,32 @@ class _TaskInfoCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    task.customerName.isNotEmpty ? task.customerName : 'Task',
+                    (detail?.customerName ?? '').isNotEmpty
+                        ? (detail?.customerName ?? '')
+                        : 'Task',
                     style: AppTypography.headlineSmall,
                   ),
                 ),
-                _StatusChip(status: task.status),
+                _StatusChip(status: status),
               ],
             ),
-            if ((task.task?.services ?? []).isNotEmpty) ...[
+            if ((detail?.services ?? []).isNotEmpty) ...[
               AppSpacing.h12,
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                children: task.task!.services!
+                children: detail!.services!
                     .where((s) => s.name != null && s.name!.isNotEmpty)
                     .map((s) => _ServiceDetailChip(label: s.name!))
                     .toList(),
               ),
             ],
-            if (task.businessName.isNotEmpty) ...[
+            if ((detail?.business?.name ?? '').isNotEmpty) ...[
               AppSpacing.h4,
               Text(
-                task.businessName,
+                detail?.business?.name ?? '',
                 style: AppTypography.bodySmall.copyWith(
-                  color: AppColors.primary,
+                  // color: AppColors.primary,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -242,21 +380,25 @@ class _TaskInfoCard extends StatelessWidget {
             _InfoRow(
               icon: AppIcons.profile,
               label: 'Customer',
-              value: task.customerName,
+              value: detail?.customerName ?? '',
             ),
             AppSpacing.h12,
-            if (task.customerPhone.isNotEmpty) ...[
+            if ((detail?.customerPhone ?? '').isNotEmpty) ...[
               _InfoRow(
                 icon: AppIcons.call,
                 label: 'Phone',
-                value: task.customerPhone,
+                value: detail?.customerPhone ?? '',
               ),
               AppSpacing.h12,
             ],
-            if (task.location.isNotEmpty) ...[
+            if ((detail?.customerInfo?.fullAddress ?? '').isNotEmpty) ...[
               Row(
                 children: [
-                  Icon(AppIcons.location, size: 18, color: AppColors.primary),
+                  const Icon(
+                    AppIcons.location,
+                    size: 18,
+                    color: AppColors.primary,
+                  ),
                   AppSpacing.w12,
                   SizedBox(
                     width: 80,
@@ -268,12 +410,15 @@ class _TaskInfoCard extends StatelessWidget {
                     ),
                   ),
                   Expanded(
-                    child: Text(task.location, style: AppTypography.bodyMedium),
+                    child: Text(
+                      detail?.customerInfo?.fullAddress ?? '',
+                      style: AppTypography.bodyMedium,
+                    ),
                   ),
-                  if ((task.task?.customerInfo?.postCode ?? '').isNotEmpty)
+                  if ((detail?.customerInfo?.postCode ?? '').isNotEmpty)
                     TextButton.icon(
                       onPressed: () =>
-                          _openInMap(task.task!.customerInfo!.postCode!),
+                          _openInMap(detail!.customerInfo!.postCode!),
                       icon: const Icon(Icons.map_outlined, size: 16),
                       label: const Text('Map'),
                       style: TextButton.styleFrom(
@@ -289,25 +434,32 @@ class _TaskInfoCard extends StatelessWidget {
               ),
               AppSpacing.h12,
             ],
-            if (task.scheduledAt != null) ...[
+            if (detail?.scheduledDateTime != null) ...[
               _InfoRow(
                 icon: AppIcons.clock,
                 label: 'Scheduled',
-                value: task.scheduledAt!.formatDateTime,
+                value: detail!.scheduledDateTime!.formatDateTime,
               ),
               AppSpacing.h12,
             ],
             _InfoRow(
               icon: AppIcons.calendar,
               label: 'Duration',
-              value: '${task.durationMinutes} minutes',
+              value: '${detail?.estimateMinutes ?? 0} minutes',
             ),
             AppSpacing.h12,
-            _InfoRow(
-              icon: AppIcons.task,
-              label: 'Type',
-              value: task.bookingType.replaceAll('_', ' '),
-            ),
+            // Services as type chips
+            // if ((detail?.services ?? []).isNotEmpty) ...[
+            //   AppSpacing.h8,
+            //   Wrap(
+            //     spacing: 8,
+            //     children: detail!.services!
+            //         .where((s) => s.name != null && s.name!.isNotEmpty)
+            //         .map((s) => _ServiceDetailChip(label: s.name!))
+            //         .toList(),
+            //   ),
+            //   AppSpacing.h12,
+            // ],
           ],
         ),
       ),
@@ -507,8 +659,8 @@ class _ServiceDetailChip extends StatelessWidget {
 // ─── Payment Info Card ───────────────────────────────────────────────────────
 
 class _PaymentInfoCard extends StatelessWidget {
-  const _PaymentInfoCard({required this.task});
-  final TaskModel task;
+  const _PaymentInfoCard({required this.assignment});
+  final AssignmentDetailModel assignment;
 
   @override
   Widget build(BuildContext context) {
@@ -521,19 +673,8 @@ class _PaymentInfoCard extends StatelessWidget {
           children: [
             Text('Payment Details', style: AppTypography.titleMedium),
             AppSpacing.h12,
-            if (task.totalPrice.isNotEmpty)
-              _InfoRow(
-                icon: Icons.attach_money_rounded,
-                label: 'Total',
-                value: '£${task.totalPrice}',
-              ),
-            if (task.totalPrice.isNotEmpty) AppSpacing.h12,
-            if (task.paymentStatus.isNotEmpty)
-              _InfoRow(
-                icon: Icons.payment_rounded,
-                label: 'Status',
-                value: task.paymentStatus.replaceAll('_', ' '),
-              ),
+            // The assignment endpoint doesn't return pricing fields in this model.
+            // If available in future, map them here from `assignment.task`.
           ],
         ),
       ),
