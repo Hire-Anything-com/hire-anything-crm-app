@@ -14,7 +14,7 @@ class AddTaskPage extends StatelessWidget {
         final cubit = context.read<AddTaskCubit>();
         return CustomScrollView(
           slivers: [
-            const AppSliverAppBar(
+            AppSliverAppBar(
               title: AppStrings.addTask,
               actions: [LogoutAction()],
             ),
