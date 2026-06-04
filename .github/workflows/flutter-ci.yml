@@ -51,16 +51,7 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Run code generation (if configured)
-        shell: bash
-        run: |
-          if grep -q "build_runner" pubspec.yaml; then
-            echo "Detected build_runner, running code generation..."
-            flutter pub run build_runner build --delete-conflicting-outputs || true
-          else
-            echo "No build_runner configuration found, skipping codegen"
-          fi
-
+      # Removed automatic code generation step — build_runner is not used in this project
       - name: Accept Android licenses
         shell: bash
         run: |
