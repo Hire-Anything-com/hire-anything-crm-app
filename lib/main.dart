@@ -13,5 +13,8 @@ void main() async {
   // Initialize service locator with API base URL
   await ServiceLocator.setupServiceLocator(baseUrl: AppConstants.baseUrl);
 
+  // Minor debug print added for CI verification on branch dev/feshan
+  debugPrint('CI check: dev/feshan - debug print added');
+
   runApp(const MyApp());
 }
