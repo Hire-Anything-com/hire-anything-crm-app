@@ -255,6 +255,7 @@ class _LeavePageState extends State<LeavePage> {
     DateTime? singleDate;
     DateTime? startDate;
     DateTime? endDate;
+    var isSubmitting = false;
     if (preselectedDate != null && !preselectedDate.isBefore(today)) {
       singleDate = DateTime(
         preselectedDate.year,
@@ -271,6 +272,20 @@ class _LeavePageState extends State<LeavePage> {
     // Don't preselect a date that already has a leave
     if (singleDate != null && existingLeaves.hasLeaveOnDay(singleDate)) {
       singleDate = null;
+    }
+
+    // If no preselected date, pick today or the next available date within one year
+    if (singleDate == null) {
+      final lastDate = today.add(const Duration(days: 365));
+      var candidate = today;
+      while (candidate.isBefore(lastDate) && existingLeaves.hasLeaveOnDay(candidate)) {
+        candidate = candidate.add(const Duration(days: 1));
+      }
+      if (!existingLeaves.hasLeaveOnDay(candidate) && !candidate.isAfter(lastDate)) {
+        singleDate = candidate;
+      } else {
+        singleDate = null; // no available date found within range
+      }
     }
 
     showModalBottomSheet<void>(
@@ -343,6 +358,26 @@ class _LeavePageState extends State<LeavePage> {
                                     isMultiple = false;
                                     startDate = null;
                                     endDate = null;
+
+                                    // Ensure singleDate is populated when switching back
+                                    // to single-day mode so the UI shows a date
+                                    final lastDate = today.add(const Duration(days: 365));
+                                    var initial = singleDate ?? today;
+                                    if (existingLeaves.hasLeaveOnDay(initial)) {
+                                      var candidate = initial;
+                                      while (candidate.isBefore(lastDate) &&
+                                          existingLeaves.hasLeaveOnDay(candidate)) {
+                                        candidate = candidate.add(const Duration(days: 1));
+                                      }
+                                      if (candidate.isAfter(lastDate)) {
+                                        // fallback to today if no free date found
+                                        initial = today;
+                                      } else {
+                                        initial = candidate;
+                                      }
+                                    }
+                                    singleDate = initial;
+                                    dateError = '';
                                   });
                                 },
                               ),
@@ -394,14 +429,31 @@ class _LeavePageState extends State<LeavePage> {
                           GestureDetector(
                             onTap: () async {
                               final singleInitial = singleDate ?? today;
+                              final lastDate = today.add(
+                                const Duration(days: 365),
+                              );
+                              // Choose a safe initial date (prefer current or next available)
+                              var initialDateForPicker = singleInitial;
+                              if (existingLeaves.hasLeaveOnDay(
+                                initialDateForPicker,
+                              )) {
+                                var candidate = initialDateForPicker;
+                                while (candidate.isBefore(lastDate) &&
+                                    existingLeaves.hasLeaveOnDay(candidate)) {
+                                  candidate = candidate.add(
+                                    const Duration(days: 1),
+                                  );
+                                }
+                                if (candidate.isAfter(lastDate))
+                                  candidate = today;
+                                initialDateForPicker = candidate;
+                              }
+
                               final picked = await showDatePicker(
                                 context: sheetContext,
-                                initialDate:
-                                    existingLeaves.hasLeaveOnDay(singleInitial)
-                                    ? null
-                                    : singleInitial,
+                                initialDate: initialDateForPicker,
                                 firstDate: today,
-                                lastDate: today.add(const Duration(days: 365)),
+                                lastDate: lastDate,
                                 selectableDayPredicate: (day) =>
                                     !existingLeaves.hasLeaveOnDay(day),
                               );
@@ -461,14 +513,28 @@ class _LeavePageState extends State<LeavePage> {
                           GestureDetector(
                             onTap: () async {
                               final startInitial = startDate ?? today;
+                              final lastDateStart = today.add(
+                                const Duration(days: 365),
+                              );
+                              var initialStart = startInitial;
+                              if (existingLeaves.hasLeaveOnDay(initialStart)) {
+                                var candidate = initialStart;
+                                while (candidate.isBefore(lastDateStart) &&
+                                    existingLeaves.hasLeaveOnDay(candidate)) {
+                                  candidate = candidate.add(
+                                    const Duration(days: 1),
+                                  );
+                                }
+                                if (candidate.isAfter(lastDateStart))
+                                  candidate = today;
+                                initialStart = candidate;
+                              }
+
                               final picked = await showDatePicker(
                                 context: sheetContext,
-                                initialDate:
-                                    existingLeaves.hasLeaveOnDay(startInitial)
-                                    ? null
-                                    : startInitial,
+                                initialDate: initialStart,
                                 firstDate: today,
-                                lastDate: today.add(const Duration(days: 365)),
+                                lastDate: lastDateStart,
                                 selectableDayPredicate: (day) =>
                                     !existingLeaves.hasLeaveOnDay(day),
                               );
@@ -535,15 +601,29 @@ class _LeavePageState extends State<LeavePage> {
                               final firstDate = startDate != null
                                   ? startDate!.add(const Duration(days: 1))
                                   : today;
+                              final lastDateEnd = today.add(
+                                const Duration(days: 365),
+                              );
                               final endInitial = endDate ?? firstDate;
+                              var initialEnd = endInitial;
+                              if (existingLeaves.hasLeaveOnDay(initialEnd)) {
+                                var candidate = initialEnd;
+                                while (candidate.isBefore(lastDateEnd) &&
+                                    existingLeaves.hasLeaveOnDay(candidate)) {
+                                  candidate = candidate.add(
+                                    const Duration(days: 1),
+                                  );
+                                }
+                                if (candidate.isAfter(lastDateEnd))
+                                  candidate = firstDate;
+                                initialEnd = candidate;
+                              }
+
                               final picked = await showDatePicker(
                                 context: sheetContext,
-                                initialDate:
-                                    existingLeaves.hasLeaveOnDay(endInitial)
-                                    ? null
-                                    : endInitial,
+                                initialDate: initialEnd,
                                 firstDate: firstDate,
-                                lastDate: today.add(const Duration(days: 365)),
+                                lastDate: lastDateEnd,
                                 selectableDayPredicate: (day) =>
                                     !existingLeaves.hasLeaveOnDay(day),
                               );
@@ -677,84 +757,96 @@ class _LeavePageState extends State<LeavePage> {
                         AppSpacing.h24,
 
                         AppButton(
-                          text: 'Submit',
-                          onPressed: () async {
-                            // Validate dates
-                            if (!isMultiple && singleDate == null) {
-                              setSheetState(() {
-                                dateError = 'Please select a date';
-                              });
-                              return;
-                            }
-                            if (isMultiple &&
-                                startDate == null &&
-                                endDate == null) {
-                              setSheetState(() {
-                                dateError =
-                                    'Please select both start and end dates';
-                              });
-                              return;
-                            }
-                            if (isMultiple && startDate == null) {
-                              setSheetState(() {
-                                dateError = 'Please select a start date';
-                              });
-                              return;
-                            }
-                            if (isMultiple && endDate == null) {
-                              setSheetState(() {
-                                dateError = 'Please select an end date';
-                              });
-                              return;
-                            }
-                            if (!formKey.currentState!.validate()) return;
+                          text: isSubmitting ? 'Submitting' : 'Submit',
+                          onPressed: isSubmitting
+                              ? null
+                              : () async {
+                                  setSheetState(() => isSubmitting = true);
+                                  // Validate dates
+                                  if (!isMultiple && singleDate == null) {
+                                    setSheetState(() {
+                                      dateError = 'Please select a date';
+                                      isSubmitting = false;
+                                    });
+                                    return;
+                                  }
+                                  if (isMultiple &&
+                                      startDate == null &&
+                                      endDate == null) {
+                                    setSheetState(() {
+                                      dateError =
+                                          'Please select both start and end dates';
+                                    });
+                                    return;
+                                  }
+                                  if (isMultiple && startDate == null) {
+                                    setSheetState(() {
+                                      dateError = 'Please select a start date';
+                                    });
+                                    return;
+                                  }
+                                  if (isMultiple && endDate == null) {
+                                    setSheetState(() {
+                                      dateError = 'Please select an end date';
+                                    });
+                                    return;
+                                  }
+                                  if (!formKey.currentState!.validate()) return;
 
-                            final dates = <DateTime>[];
-                            if (!isMultiple) {
-                              dates.add(singleDate!);
-                            } else {
-                              var current = startDate!;
-                              while (!current.isAfter(endDate!)) {
-                                if (!existingLeaves.hasLeaveOnDay(current)) {
-                                  dates.add(current);
-                                }
-                                current = current.add(const Duration(days: 1));
-                              }
-                            }
+                                  final dates = <DateTime>[];
+                                  if (!isMultiple) {
+                                    dates.add(singleDate!);
+                                  } else {
+                                    var current = startDate!;
+                                    while (!current.isAfter(endDate!)) {
+                                      if (!existingLeaves.hasLeaveOnDay(
+                                        current,
+                                      )) {
+                                        dates.add(current);
+                                      }
+                                      current = current.add(
+                                        const Duration(days: 1),
+                                      );
+                                    }
+                                  }
 
-                            if (dates.isEmpty) {
-                              setSheetState(() {
-                                dateError =
-                                    'All selected dates already have leaves';
-                              });
-                              return;
-                            }
+                                  if (dates.isEmpty) {
+                                    setSheetState(() {
+                                      dateError =
+                                          'All selected dates already have leaves';
+                                    });
+                                    return;
+                                  }
 
-                            await context.read<LeaveCubit>().applyLeave(
-                              dates: dates,
-                              type: selectedType,
-                              reason: reasonController.text.trim(),
-                            );
+                                  await context.read<LeaveCubit>().applyLeave(
+                                    dates: dates,
+                                    type: selectedType,
+                                    reason: reasonController.text.trim(),
+                                  );
 
-                            if (!context.mounted) return;
-                            final cubitState = context.read<LeaveCubit>().state;
-                            if (cubitState.submitError.isNotEmpty) {
-                              AppSnackBar.show(
-                                context,
-                                message: cubitState.submitError,
-                                type: SnackBarType.error,
-                              );
-                            } else {
-                              Navigator.of(sheetContext).pop();
-                              AppSnackBar.show(
-                                context,
-                                message: dates.length == 1
-                                    ? 'Leave applied successfully!'
-                                    : '${dates.length} leaves applied successfully!',
-                                type: SnackBarType.success,
-                              );
-                            }
-                          },
+                                  if (!context.mounted) return;
+                                  final cubitState = context
+                                      .read<LeaveCubit>()
+                                      .state;
+                                  if (cubitState.submitError.isNotEmpty) {
+                                    AppSnackBar.show(
+                                      context,
+                                      message: cubitState.submitError,
+                                      type: SnackBarType.error,
+                                    );
+                                    setSheetState(() => isSubmitting = false);
+                                  } else {
+                                    Navigator.of(sheetContext).pop();
+                                    AppSnackBar.show(
+                                      context,
+                                      message: dates.length == 1
+                                          ? 'Leave applied successfully!'
+                                          : '${dates.length} leaves applied successfully!',
+                                      type: SnackBarType.success,
+                                    );
+                                    setSheetState(() => isSubmitting = false);
+                                  }
+                                },
                         ),
                       ],
                     ),
@@ -927,21 +1019,6 @@ class _LeaveCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (!isPast && leave.status == LeaveStatus.pending)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4),
-                    child: GestureDetector(
-                      onTap: () =>
-                          context.read<LeaveCubit>().cancelLeave(leave.id),
-                      child: Text(
-                        'Cancel',
-                        style: AppTypography.labelSmall.copyWith(
-                          color: AppColors.error,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ),
               ],
             ),
           ],

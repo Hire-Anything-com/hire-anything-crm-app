@@ -4,9 +4,11 @@ import 'package:hireanythingbooking/core/errors/exceptions.dart';
 import 'package:hireanythingbooking/core/utils/debug_logger.dart';
 import 'package:hireanythingbooking/core/utils/typedefs.dart';
 import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/data/model/task_model.dart';
+import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/data/model/assignment_detail_model.dart';
 
 abstract class TaskRemoteDataSource {
   Future<List<TaskModel>> getMyAssignments();
+  Future<AssignmentDetailModel> getAssignmentById(String id);
   Future<void> respondToAssignment({
     required String id,
     required String action,
@@ -71,6 +73,50 @@ class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
       throw _handleDioException(e);
     } catch (e) {
       DebugLogger.error('REMOTE', 'Unexpected error fetching assignments: $e');
+      throw ServerException(message: e.toString());
+    }
+  }
+
+  @override
+  Future<AssignmentDetailModel> getAssignmentById(String id) async {
+    DebugLogger.remote('Fetching assignment details — id: $id');
+    try {
+      final response = await _dio.get<dynamic>(
+        '${AppConstants.taskAssignmentsEndpoint}/$id',
+      );
+
+      DebugLogger.remote(
+        'Assignment details response — status: ${response.statusCode}',
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final apiResponse = response.data;
+        if (apiResponse is Map<String, dynamic> &&
+            apiResponse['success'] == true &&
+            apiResponse['data'] != null) {
+          return AssignmentDetailModel.fromJson(apiResponse['data'] as DataMap);
+        }
+      }
+
+      if (response.statusCode == 401) {
+        final msg = _extractMessage(response.data) ?? 'Unauthorized';
+        throw ServerException(message: msg, statusCode: 401);
+      }
+
+      throw ServerException(
+        message: _extractMessage(response.data) ?? 'Failed to fetch assignment',
+        statusCode: response.statusCode,
+      );
+    } on ServerException {
+      rethrow;
+    } on DioException catch (e) {
+      DebugLogger.error(
+        'REMOTE',
+        'DioException fetching assignment: ${e.type}',
+      );
+      throw _handleDioException(e);
+    } catch (e) {
+      DebugLogger.error('REMOTE', 'Unexpected error fetching assignment: $e');
       throw ServerException(message: e.toString());
     }
   }

@@ -21,22 +21,43 @@ class TaskPhotoPage extends StatelessWidget {
       body: BlocConsumer<TaskCubit, TaskState>(
         listenWhen: (prev, curr) =>
             prev.isUploadingPhotos && !curr.isUploadingPhotos,
-        listener: (context, state) {
+        listener: (context, state) async {
           if (state.photoUploadError != null) {
             AppSnackBar.show(
               context,
               message: state.photoUploadError!,
               type: SnackBarType.error,
             );
-          } else {
-            Navigator.of(context).pushReplacement(
+            return;
+          }
+
+          // Determine whether OTP is required for this assignment
+          final cubit = context.read<TaskCubit>();
+          final requireOtp =
+              cubit.state.selectedAssignment?.task?.requireOtp ?? false;
+          final navigator = Navigator.of(context);
+
+          if (requireOtp) {
+            navigator.pushReplacement(
               MaterialPageRoute<void>(
                 builder: (_) => BlocProvider.value(
-                  value: context.read<TaskCubit>(),
+                  value: cubit,
                   child: const TaskOtpPage(),
                 ),
               ),
             );
+            return;
+          }
+
+          // OTP not required — complete task immediately by sending empty otp
+          final completed = await cubit.verifyOtp('');
+          if (completed) {
+            AppSnackBar.show(
+              context,
+              message: 'Task completed successfully!',
+              type: SnackBarType.success,
+            );
+            navigator.popUntil((route) => route.isFirst);
           }
         },
         builder: (context, state) {

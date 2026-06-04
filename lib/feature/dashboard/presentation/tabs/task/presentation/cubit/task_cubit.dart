@@ -4,17 +4,24 @@ import 'package:hireanythingbooking/core/utils/debug_logger.dart';
 import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/presentation/cubit/task_state.dart';
 import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/domain/usecases/get_my_assignments_usecase.dart';
 import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/domain/usecases/respond_to_assignment_usecase.dart';
+import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/domain/usecases/get_assignment_details_usecase.dart';
 import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/domain/usecases/upload_task_photos_usecase.dart';
 import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/domain/usecases/complete_task_usecase.dart';
 import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/data/model/task_model.dart';
+import 'package:hireanythingbooking/core/di/service_locator.dart';
+import 'package:hireanythingbooking/feature/login/domain/usecases/login_usecase.dart';
+import 'package:hireanythingbooking/core/routes/router.dart';
+import 'package:hireanythingbooking/core/routes/routes.dart';
 
 class TaskCubit extends Cubit<TaskState> {
   TaskCubit({
     required GetMyAssignmentsUseCase getMyAssignmentsUseCase,
+    required GetAssignmentDetailsUseCase getAssignmentDetailsUseCase,
     required RespondToAssignmentUseCase respondToAssignmentUseCase,
     required UploadTaskPhotosUseCase uploadTaskPhotosUseCase,
     required CompleteTaskUseCase completeTaskUseCase,
   }) : _getMyAssignmentsUseCase = getMyAssignmentsUseCase,
+       _getAssignmentDetailsUseCase = getAssignmentDetailsUseCase,
        _respondToAssignmentUseCase = respondToAssignmentUseCase,
        _uploadTaskPhotosUseCase = uploadTaskPhotosUseCase,
        _completeTaskUseCase = completeTaskUseCase,
@@ -23,6 +30,7 @@ class TaskCubit extends Cubit<TaskState> {
   }
 
   final GetMyAssignmentsUseCase _getMyAssignmentsUseCase;
+  final GetAssignmentDetailsUseCase _getAssignmentDetailsUseCase;
   final RespondToAssignmentUseCase _respondToAssignmentUseCase;
   final UploadTaskPhotosUseCase _uploadTaskPhotosUseCase;
   final CompleteTaskUseCase _completeTaskUseCase;
@@ -31,10 +39,60 @@ class TaskCubit extends Cubit<TaskState> {
   Future<void> fetchMyAssignments() async {
     emit(state.copyWith(isLoading: true, clearError: true));
     final result = await _getMyAssignmentsUseCase();
+    await result.fold(
+      (failure) async {
+        // If unauthorized, attempt a silent retry (interceptor may refresh token)
+        if (failure.statusCode == 401) {
+          DebugLogger.error('TASK', '401 received — attempting silent retry');
+          final retry = await _getMyAssignmentsUseCase();
+          await retry.fold(
+            (f2) async {
+              // If still unauthorized, force logout and navigate to login
+              if (f2.statusCode == 401) {
+                DebugLogger.error('TASK', '401 after retry — logging out');
+                try {
+                  final logoutUseCase = getIt<LogoutUseCase>();
+                  await logoutUseCase();
+                } catch (e) {
+                  DebugLogger.error('AUTH', 'Logout failed: $e');
+                }
+                try {
+                  AppRouter.router.go(AppRoutes.login);
+                } catch (e) {
+                  DebugLogger.error('AUTH', 'Navigation to login failed: $e');
+                }
+                // clear loading without showing retry UI
+                emit(state.copyWith(isLoading: false));
+              } else {
+                emit(
+                  state.copyWith(isLoading: false, errorMessage: f2.message),
+                );
+              }
+            },
+            (tasks) async {
+              emit(state.copyWith(isLoading: false, tasks: tasks));
+            },
+          );
+        } else {
+          emit(state.copyWith(isLoading: false, errorMessage: failure.message));
+        }
+      },
+      (tasks) async {
+        emit(state.copyWith(isLoading: false, tasks: tasks));
+      },
+    );
+  }
+
+  Future<void> fetchAssignmentDetails(String id) async {
+    if (id.isEmpty) return;
+    emit(state.copyWith(isLoading: true, clearError: true));
+    final result = await _getAssignmentDetailsUseCase(id);
     result.fold(
       (failure) =>
           emit(state.copyWith(isLoading: false, errorMessage: failure.message)),
-      (tasks) => emit(state.copyWith(isLoading: false, tasks: tasks)),
+      (assignment) {
+        emit(state.copyWith(isLoading: false, selectedAssignment: assignment));
+      },
     );
   }
 
@@ -252,6 +310,65 @@ class TaskCubit extends Cubit<TaskState> {
           'Photos submitted successfully for task: $taskId',
         );
         emit(state.copyWith(isUploadingPhotos: false));
+      },
+    );
+  }
+
+  /// Submit photos when there are no photos to upload (skipped UI flow).
+  /// Returns true on success, false on failure.
+  Future<bool> submitPhotosSkippingUI({int? startTime, int? endTime}) async {
+    final taskId = state.activeTaskId;
+    if (taskId == null) {
+      DebugLogger.error('TASK', 'submitPhotosSkippingUI with no activeTaskId');
+      return false;
+    }
+
+    final start =
+        startTime ??
+        state.taskStartTimeEpoch ??
+        DateTime.now().millisecondsSinceEpoch ~/ 1000;
+    final end =
+        endTime ??
+        state.taskEndTimeEpoch ??
+        DateTime.now().millisecondsSinceEpoch ~/ 1000;
+
+    DebugLogger.log(
+      '📤',
+      'TASK',
+      'Submitting empty photos payload — id: $taskId, startTime: $start, endTime: $end',
+    );
+
+    emit(state.copyWith(isUploadingPhotos: true, clearPhotoUploadError: true));
+
+    final result = await _uploadTaskPhotosUseCase(
+      id: taskId,
+      photos: const [],
+      startTime: start,
+      endTime: end,
+    );
+
+    return result.fold(
+      (failure) {
+        DebugLogger.error(
+          'TASK',
+          'Photo submission (skipped) failed: ${failure.message}',
+        );
+        emit(
+          state.copyWith(
+            isUploadingPhotos: false,
+            photoUploadError: failure.message,
+          ),
+        );
+        return false;
+      },
+      (_) {
+        DebugLogger.log(
+          '✅',
+          'TASK',
+          'Empty photo payload submitted successfully for task: $taskId',
+        );
+        emit(state.copyWith(isUploadingPhotos: false));
+        return true;
       },
     );
   }

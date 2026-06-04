@@ -1,10 +1,12 @@
 import 'package:equatable/equatable.dart';
 import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/data/model/task_model.dart';
+import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/data/model/assignment_detail_model.dart';
 
 class TaskState extends Equatable {
   const TaskState({
     this.tasks = const [],
     this.isLoading = false,
+    this.selectedAssignment,
     this.activeTaskId,
     this.remainingSeconds = 0,
     this.isTimerRunning = false,
@@ -24,6 +26,8 @@ class TaskState extends Equatable {
     this.respondingTaskId,
     String? errorMessage,
   }) : _errorMessage = errorMessage;
+
+  final AssignmentDetailModel? selectedAssignment;
 
   final List<TaskModel> tasks;
   final bool isLoading;
@@ -94,6 +98,7 @@ class TaskState extends Equatable {
   }
 
   TaskState copyWith({
+    AssignmentDetailModel? selectedAssignment,
     List<TaskModel>? tasks,
     bool? isLoading,
     String? activeTaskId,
@@ -124,6 +129,7 @@ class TaskState extends Equatable {
     bool clearPendingPhoto = false,
   }) {
     return TaskState(
+      selectedAssignment: selectedAssignment ?? this.selectedAssignment,
       tasks: tasks ?? this.tasks,
       isLoading: isLoading ?? this.isLoading,
       activeTaskId: clearActiveTask
@@ -160,6 +166,7 @@ class TaskState extends Equatable {
 
   @override
   List<Object?> get props => [
+    selectedAssignment,
     tasks,
     isLoading,
     activeTaskId,

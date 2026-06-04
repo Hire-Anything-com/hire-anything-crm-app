@@ -21,6 +21,14 @@ TaskStatus _parseTaskStatus(String? value) {
   }
 }
 
+int? _parseInt(dynamic value) {
+  if (value == null) return null;
+  if (value is int) return value;
+  if (value is double) return value.toInt();
+  if (value is String) return int.tryParse(value);
+  return null;
+}
+
 // ─── Service Model ───────────────────────────────────────────────────────────
 
 class ServiceModel extends Equatable {
@@ -115,7 +123,7 @@ class TaskDetailModel extends Equatable {
           ? CustomerInfoModel.fromJson(json['customerInfo'] as DataMap)
           : null,
       totalPrice: json['totalPrice'] as String?,
-      estimateMinutes: json['estimateMinutes'] as int?,
+      estimateMinutes: _parseInt(json['estimateMinutes']),
       bookingType: json['bookingType'] as String?,
       status: json['status'] as String?,
       paymentStatus: json['paymentStatus'] as String?,
@@ -124,7 +132,7 @@ class TaskDetailModel extends Equatable {
       photos: (json['photos'] as List<dynamic>?)
           ?.map((e) => e as String)
           .toList(),
-      scheduledFor: json['scheduledFor'] as int?,
+      scheduledFor: _parseInt(json['scheduledFor']),
       startedAt: json['startedAt'] as String?,
       completedAt: json['completedAt'] as String?,
       createdAt: json['createdAt'] as String?,

@@ -9,6 +9,8 @@ import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/leave/pr
 import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/history/pages/history_page.dart';
 import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/presentation/cubit/task_cubit.dart';
 import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/presentation/pages/task_list_page.dart';
+import 'package:hireanythingbooking/feature/add_task/presentation/pages/add_task_page.dart';
+import 'package:hireanythingbooking/feature/add_task/presentation/cubit/add_task_cubit.dart';
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
@@ -18,6 +20,7 @@ class DashboardPage extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (_) => getIt<TaskCubit>()),
+        BlocProvider(create: (_) => getIt<AddTaskCubit>()),
         BlocProvider(create: (_) => getIt<LeaveCubit>()),
       ],
       child: BlocBuilder<DashboardCubit, DashboardState>(
@@ -25,7 +28,12 @@ class DashboardPage extends StatelessWidget {
           return Scaffold(
             body: IndexedStack(
               index: state.selectedIndex,
-              children: const [TaskListPage(), LeavePage(), HistoryPage()],
+              children: const [
+                TaskListPage(),
+                LeavePage(),
+                AddTaskPage(),
+                HistoryPage(),
+              ],
             ),
             bottomNavigationBar: Container(
               decoration: BoxDecoration(
@@ -84,9 +92,18 @@ class DashboardPage extends StatelessWidget {
                     ),
                     BottomNavigationBarItem(
                       icon: _buildNavIcon(
-                        AppIcons.history,
+                        AppIcons.add,
                         false,
                         state.selectedIndex == 2,
+                      ),
+                      activeIcon: _buildNavIcon(AppIcons.add, true, true),
+                      label: AppStrings.addTask,
+                    ),
+                    BottomNavigationBarItem(
+                      icon: _buildNavIcon(
+                        AppIcons.history,
+                        false,
+                        state.selectedIndex == 3,
                       ),
                       activeIcon: _buildNavIcon(AppIcons.history, true, true),
                       label: AppStrings.history,

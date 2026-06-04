@@ -6,6 +6,7 @@ import 'package:hireanythingbooking/core/utils/typedefs.dart';
 import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/data/datasources/task_remote_datasource.dart';
 import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/domain/repositories/task_repository.dart';
 import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/data/model/task_model.dart';
+import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/data/model/assignment_detail_model.dart';
 
 class TaskRepositoryImpl implements TaskRepository {
   TaskRepositoryImpl({required TaskRemoteDataSource remoteDataSource})
@@ -117,6 +118,28 @@ class TaskRepositoryImpl implements TaskRepository {
       return Left(ServerFailure(message: e.message, statusCode: e.statusCode));
     } catch (e) {
       DebugLogger.error('REPOSITORY', 'Unexpected error completing task: $e');
+      return Left(ServerFailure(message: e.toString()));
+    }
+  }
+
+  @override
+  ResultFuture<AssignmentDetailModel> getAssignmentById(String id) async {
+    DebugLogger.repository('Fetching assignment details — id: $id');
+    try {
+      final assignment = await _remoteDataSource.getAssignmentById(id);
+      DebugLogger.repository('Assignment fetched — id: ${assignment.id}');
+      return Right(assignment);
+    } on ServerException catch (e) {
+      DebugLogger.error(
+        'REPOSITORY',
+        'ServerException fetching assignment: ${e.message}',
+      );
+      return Left(ServerFailure(message: e.message, statusCode: e.statusCode));
+    } catch (e) {
+      DebugLogger.error(
+        'REPOSITORY',
+        'Unexpected error fetching assignment: $e',
+      );
       return Left(ServerFailure(message: e.toString()));
     }
   }

@@ -6,7 +6,7 @@ class AppConstants {
   static const int appBuildNumber = 1;
 
   // API
-  static const String baseUrl = 'https://crm-api.hireanything.com';
+  static const String baseUrl = 'https://bookingcrm-prod-be.hireanything.com';
   static const String loginEndpoint = '/api/v1/auth/login';
   static const String refreshTokenEndpoint = '/api/v1/auth/refresh';
   static const String logoutEndpoint = '/api/v1/auth/logout';

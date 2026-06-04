@@ -88,5 +88,6 @@ class AppStrings {
   // Dashboard Tabs
   static const String tasks = 'Tasks';
   static const String leaves = 'Leaves';
+  static const String addTask = 'Add Task';
   static const String history = 'History';
 }

@@ -50,7 +50,7 @@ class TaskListPage extends StatelessWidget {
 
         return CustomScrollView(
           slivers: [
-            AppSliverAppBar(
+            const AppSliverAppBar(
               title: AppStrings.taskTitle,
               actions: [LogoutAction()],
             ),

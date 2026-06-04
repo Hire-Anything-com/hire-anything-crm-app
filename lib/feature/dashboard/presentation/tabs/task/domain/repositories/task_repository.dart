@@ -1,5 +1,6 @@
 import 'package:hireanythingbooking/core/utils/typedefs.dart';
 import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/data/model/task_model.dart';
+import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/data/model/assignment_detail_model.dart';
 
 abstract class TaskRepository {
   ResultFuture<List<TaskModel>> getMyAssignments();
@@ -18,4 +19,5 @@ abstract class TaskRepository {
     required String id,
     required String otp,
   });
+  ResultFuture<AssignmentDetailModel> getAssignmentById(String id);
 }
