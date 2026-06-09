@@ -1,0 +1,20 @@
+# This file configures the analyzer, which statically analyzes Dart code to
+# check for errors, warnings, and lints.
+#
+# The issues identified by the analyzer are surfaced in the UI of Dart-enabled
+# IDEs (https://dart.dev/tools#ides-and-editors). The analyzer can also be
+# invoked from the command line by running `flutter analyze`.
+
+analyzer:
+  errors:
+    deprecated_member_use: ignore ignore
+include: package:very_good_analysis/analysis_options.yaml
+
+linter:
+  rules:
+    public_member_api_docs: false
+    # Disabled: allow lines longer than 80 characters in this project
+    lines_longer_than_80_chars: false
+
+# dart_code_metrics has been deprecated and is incompatible with modern packages.
+# Consider using DCM (https://dcm.dev) as a replacement if needed.
