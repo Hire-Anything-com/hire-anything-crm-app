@@ -7,9 +7,8 @@ import 'package:hireanythingbooking/feature/forgot_password/presentation/cubit/r
 
 /// Submit button widget for reset password email page
 class ResetPasswordSubmitButton extends StatelessWidget {
+  const ResetPasswordSubmitButton({required this.onPressed, super.key});
   final VoidCallback onPressed;
-
-  const ResetPasswordSubmitButton({super.key, required this.onPressed});
 
   @override
   Widget build(BuildContext context) {

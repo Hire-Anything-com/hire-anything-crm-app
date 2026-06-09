@@ -8,4 +8,3 @@ class DashboardCubit extends Cubit<DashboardState> {
     emit(state.copyWith(selectedIndex: index));
   }
 }
-

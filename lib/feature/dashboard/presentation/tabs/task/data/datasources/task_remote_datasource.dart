@@ -3,8 +3,8 @@ import 'package:hireanythingbooking/core/constants/app_constants.dart';
 import 'package:hireanythingbooking/core/errors/exceptions.dart';
 import 'package:hireanythingbooking/core/utils/debug_logger.dart';
 import 'package:hireanythingbooking/core/utils/typedefs.dart';
-import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/data/model/task_model.dart';
 import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/data/model/assignment_detail_model.dart';
+import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/data/model/task_model.dart';
 
 abstract class TaskRemoteDataSource {
   Future<List<TaskModel>> getMyAssignments();
@@ -277,14 +277,18 @@ class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
       case DioExceptionType.connectionTimeout:
       case DioExceptionType.sendTimeout:
       case DioExceptionType.receiveTimeout:
-        return ServerException(
+        return const ServerException(
           message: 'Connection timed out. Please try again.',
         );
       case DioExceptionType.connectionError:
-        return ServerException(message: 'No internet connection.');
+        return const ServerException(message: 'No internet connection.');
       case DioExceptionType.cancel:
-        return ServerException(message: 'Request cancelled.');
-      default:
+        return const ServerException(message: 'Request cancelled.');
+      case DioExceptionType.badResponse:
+        return ServerException(message: e.message ?? 'Network error occurred.');
+      case DioExceptionType.unknown:
+        return ServerException(message: e.message ?? 'Network error occurred.');
+      case DioExceptionType.badCertificate:
         return ServerException(message: e.message ?? 'Network error occurred.');
     }
   }

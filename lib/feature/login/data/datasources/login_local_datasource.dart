@@ -22,6 +22,15 @@ abstract class LoginLocalDataSource {
 
   /// Clears all tokens
   Future<void> clearTokens();
+
+  /// Save user profile fields locally.
+  Future<void> saveUserProfile(Map<String, dynamic> profile);
+
+  /// Get stored user profile or null.
+  Future<Map<String, dynamic>?> getUserProfile();
+
+  /// Clears stored user profile.
+  Future<void> clearUserProfile();
 }
 
 /// Implementation of login local data source
@@ -108,6 +117,42 @@ class LoginLocalDataSourceImpl implements LoginLocalDataSource {
       DebugLogger.storage('All tokens cleared successfully');
     } catch (e) {
       DebugLogger.error('STORAGE', 'Failed to clear tokens: $e');
+      throw CacheException(message: e.toString());
+    }
+  }
+
+  @override
+  Future<void> saveUserProfile(Map<String, dynamic> profile) async {
+    DebugLogger.storage('Saving user profile to secure storage');
+    try {
+      await _secureTokenStorage.saveUserProfile(profile);
+      DebugLogger.storage('User profile saved');
+    } catch (e) {
+      DebugLogger.error('STORAGE', 'Failed to save user profile: $e');
+      throw CacheException(message: e.toString());
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>?> getUserProfile() async {
+    try {
+      final profile = await _secureTokenStorage.getUserProfile();
+      DebugLogger.storage('Retrieved user profile: ${profile != null}');
+      return profile;
+    } catch (e) {
+      DebugLogger.error('STORAGE', 'Failed to get user profile: $e');
+      throw CacheException(message: e.toString());
+    }
+  }
+
+  @override
+  Future<void> clearUserProfile() async {
+    DebugLogger.storage('Clearing user profile from secure storage');
+    try {
+      await _secureTokenStorage.clearUserProfile();
+      DebugLogger.storage('User profile cleared');
+    } catch (e) {
+      DebugLogger.error('STORAGE', 'Failed to clear user profile: $e');
       throw CacheException(message: e.toString());
     }
   }

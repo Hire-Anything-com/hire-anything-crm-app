@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
-import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/data/model/task_model.dart';
 import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/data/model/assignment_detail_model.dart';
+import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/data/model/task_model.dart';
 
 class TaskState extends Equatable {
   const TaskState({

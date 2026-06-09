@@ -35,7 +35,6 @@ class ChangePasswordScreen extends StatelessWidget {
             context,
             message: state.errorMessage!,
             type: SnackBarType.error,
-            duration: const Duration(seconds: 3),
           );
           Future<void>.delayed(const Duration(seconds: 3), () {
             if (!context.mounted) return;

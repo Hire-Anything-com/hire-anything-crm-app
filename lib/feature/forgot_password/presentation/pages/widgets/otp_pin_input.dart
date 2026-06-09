@@ -7,14 +7,13 @@ import 'package:pinput/pinput.dart';
 
 /// PIN input widget for OTP entry
 class OtpPinInput extends StatelessWidget {
-  final TextEditingController controller;
-  final ValueChanged<String> onChanged;
-
   const OtpPinInput({
-    super.key,
     required this.controller,
     required this.onChanged,
+    super.key,
   });
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
 
   @override
   Widget build(BuildContext context) {

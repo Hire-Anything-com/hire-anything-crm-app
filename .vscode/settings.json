@@ -3,5 +3,6 @@
     "git config": true,
     "git add": true,
     "git commit": true
-  }
+  },
+  "cSpell.words": ["hireanythingbooking", "hugeicons", "usecase", "usecases"]
 }

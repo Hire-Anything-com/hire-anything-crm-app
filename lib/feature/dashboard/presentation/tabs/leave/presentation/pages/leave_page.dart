@@ -1,5 +1,3 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hireanythingbooking/core/core.dart';
 import 'package:hireanythingbooking/core/extension/date_time_ext.dart';
 import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/leave/data/model/leave_model.dart';
@@ -26,12 +24,12 @@ class _LeavePageState extends State<LeavePage> {
     return BlocBuilder<LeaveCubit, LeaveState>(
       builder: (context, state) {
         if (state.isLoading && state.leaves.isEmpty) {
-          return Scaffold(
-            appBar: const AppAppBar(
+          return const Scaffold(
+            appBar: AppAppBar(
               title: AppStrings.leaves,
               actions: [LogoutAction()],
             ),
-            body: const Center(child: CircularProgressIndicator()),
+            body: Center(child: CircularProgressIndicator()),
           );
         }
 
@@ -278,10 +276,12 @@ class _LeavePageState extends State<LeavePage> {
     if (singleDate == null) {
       final lastDate = today.add(const Duration(days: 365));
       var candidate = today;
-      while (candidate.isBefore(lastDate) && existingLeaves.hasLeaveOnDay(candidate)) {
+      while (candidate.isBefore(lastDate) &&
+          existingLeaves.hasLeaveOnDay(candidate)) {
         candidate = candidate.add(const Duration(days: 1));
       }
-      if (!existingLeaves.hasLeaveOnDay(candidate) && !candidate.isAfter(lastDate)) {
+      if (!existingLeaves.hasLeaveOnDay(candidate) &&
+          !candidate.isAfter(lastDate)) {
         singleDate = candidate;
       } else {
         singleDate = null; // no available date found within range
@@ -361,13 +361,19 @@ class _LeavePageState extends State<LeavePage> {
 
                                     // Ensure singleDate is populated when switching back
                                     // to single-day mode so the UI shows a date
-                                    final lastDate = today.add(const Duration(days: 365));
+                                    final lastDate = today.add(
+                                      const Duration(days: 365),
+                                    );
                                     var initial = singleDate ?? today;
                                     if (existingLeaves.hasLeaveOnDay(initial)) {
                                       var candidate = initial;
                                       while (candidate.isBefore(lastDate) &&
-                                          existingLeaves.hasLeaveOnDay(candidate)) {
-                                        candidate = candidate.add(const Duration(days: 1));
+                                          existingLeaves.hasLeaveOnDay(
+                                            candidate,
+                                          )) {
+                                        candidate = candidate.add(
+                                          const Duration(days: 1),
+                                        );
                                       }
                                       if (candidate.isAfter(lastDate)) {
                                         // fallback to today if no free date found
@@ -444,8 +450,9 @@ class _LeavePageState extends State<LeavePage> {
                                     const Duration(days: 1),
                                   );
                                 }
-                                if (candidate.isAfter(lastDate))
+                                if (candidate.isAfter(lastDate)) {
                                   candidate = today;
+                                }
                                 initialDateForPicker = candidate;
                               }
 
@@ -525,8 +532,9 @@ class _LeavePageState extends State<LeavePage> {
                                     const Duration(days: 1),
                                   );
                                 }
-                                if (candidate.isAfter(lastDateStart))
+                                if (candidate.isAfter(lastDateStart)) {
                                   candidate = today;
+                                }
                                 initialStart = candidate;
                               }
 
@@ -614,8 +622,9 @@ class _LeavePageState extends State<LeavePage> {
                                     const Duration(days: 1),
                                   );
                                 }
-                                if (candidate.isAfter(lastDateEnd))
+                                if (candidate.isAfter(lastDateEnd)) {
                                   candidate = firstDate;
+                                }
                                 initialEnd = candidate;
                               }
 

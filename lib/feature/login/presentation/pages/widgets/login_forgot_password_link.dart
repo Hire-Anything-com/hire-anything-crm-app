@@ -6,9 +6,8 @@ import 'package:hireanythingbooking/core/theme/app_typography.dart';
 
 /// Forgot password link widget
 class LoginForgotPasswordLink extends StatelessWidget {
+  const LoginForgotPasswordLink({required this.onTap, super.key});
   final VoidCallback onTap;
-
-  const LoginForgotPasswordLink({super.key, required this.onTap});
 
   @override
   Widget build(BuildContext context) {

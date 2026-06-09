@@ -6,9 +6,8 @@ import 'package:hireanythingbooking/core/theme/app_typography.dart';
 
 /// Header widget with icon, title, and subtitle for reset password email page
 class ResetPasswordHeader extends StatelessWidget {
+  const ResetPasswordHeader({required this.screenHeight, super.key});
   final double screenHeight;
-
-  const ResetPasswordHeader({super.key, required this.screenHeight});
 
   @override
   Widget build(BuildContext context) {

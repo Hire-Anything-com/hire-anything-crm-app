@@ -3,9 +3,9 @@ import 'package:hireanythingbooking/feature/add_task/domain/entities/entities.da
 import 'package:hireanythingbooking/feature/add_task/domain/repositories/add_task_repository.dart';
 
 class AddTaskRepositoryImpl implements AddTaskRepository {
-  final AddTaskRemoteDataSource remoteDataSource;
-
   AddTaskRepositoryImpl({required this.remoteDataSource});
+
+  final AddTaskRemoteDataSource remoteDataSource;
 
   @override
   Future<List<ServiceItem>> getMyServices() async {

@@ -1,11 +1,10 @@
-﻿import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:hireanythingbooking/core/core.dart';
+﻿import 'package:hireanythingbooking/core/core.dart';
 import 'package:hireanythingbooking/core/extension/date_time_ext.dart';
+import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/data/model/task_model.dart';
 import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/presentation/cubit/task_cubit.dart';
 import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/presentation/cubit/task_state.dart';
-import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/data/model/task_model.dart';
 import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/presentation/pages/task_detail_page.dart';
+import 'package:hireanythingbooking/feature/login/presentation/presentation.dart';
 
 class TaskListPage extends StatelessWidget {
   const TaskListPage({super.key});
@@ -48,11 +47,15 @@ class TaskListPage extends StatelessWidget {
         final cancelled = state.cancelledTasks;
         final respondingTaskId = state.respondingTaskId;
 
+        final userName = context.select<LoginCubit, String?>(
+          (c) => c.state.loginResponse?.user.name,
+        );
+
         return CustomScrollView(
           slivers: [
-            const AppSliverAppBar(
-              title: AppStrings.taskTitle,
-              actions: [LogoutAction()],
+            AppSliverAppBar(
+              title: 'Hi ${userName ?? ''}',
+              actions: const [LogoutAction()],
             ),
 
             // Accepted Tasks
@@ -248,11 +251,11 @@ Future<void> _showRejectDialog(BuildContext context, String taskId) async {
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.grey200),
+              borderSide: const BorderSide(color: AppColors.grey200),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.primary),
+              borderSide: const BorderSide(color: AppColors.primary),
             ),
             contentPadding: const EdgeInsets.all(12),
           ),
@@ -288,7 +291,7 @@ Future<void> _showRejectDialog(BuildContext context, String taskId) async {
     },
   );
 
-  if (confirmed == true) {
+  if (confirmed ?? false) {
     await cubit.rejectTask(taskId, controller.text.trim());
   }
   controller.dispose();
@@ -562,7 +565,7 @@ class _ServiceChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(AppIcons.task, size: 12, color: AppColors.primary),
+          const Icon(AppIcons.task, size: 12, color: AppColors.primary),
           const SizedBox(width: 4),
           Text(
             label.toUpperCase(),

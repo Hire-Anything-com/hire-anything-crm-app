@@ -21,6 +21,11 @@ class LoginCubit extends Cubit<LoginState> {
     _initializeDebugValues();
   }
 
+  /// Loads cached login response into state (used during app startup)
+  void loadCachedLogin(LoginResponseEntity loginResponse) {
+    emit(state.copyWith(loginResponse: loginResponse, isLoginSuccess: true));
+  }
+
   final LoginUseCase _loginUseCase;
   final LogoutUseCase _logoutUseCase;
 
@@ -71,7 +76,7 @@ class LoginCubit extends Cubit<LoginState> {
     }
 
     DebugLogger.auth('Login form validated — initiating login');
-    emit(state.copyWith(isLoading: true, errorMessage: null));
+    emit(state.copyWith(isLoading: true));
 
     final email = emailController.text.trim();
     final password = passwordController.text.trim();
@@ -139,8 +144,9 @@ class LoginCubit extends Cubit<LoginState> {
 
   @override
   Future<void> close() {
-    emailFocusNode.removeListener(_onEmailFocusChanged);
-    emailFocusNode.dispose();
+    emailFocusNode
+      ..removeListener(_onEmailFocusChanged)
+      ..dispose();
     emailController.dispose();
     passwordController.dispose();
     return super.close();

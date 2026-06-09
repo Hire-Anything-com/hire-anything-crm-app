@@ -1,11 +1,7 @@
 import 'package:hireanythingbooking/core/utils/typedefs.dart';
 import 'package:hireanythingbooking/feature/login/domain/entities/login_entity.dart';
-import 'package:json_annotation/json_annotation.dart';
 
-part 'login_model.g.dart';
-
-/// Model for user data
-@JsonSerializable()
+/// Plain JSON model for user data (manual serialization)
 class UserModel extends UserEntity {
   const UserModel({
     required super.id,
@@ -15,13 +11,15 @@ class UserModel extends UserEntity {
     super.businessId,
   });
 
-  /// Creates a [UserModel] from JSON
-  factory UserModel.fromJson(DataMap json) => _$UserModelFromJson(json);
-
-  /// Converts [UserModel] to JSON
-  DataMap toJson() => _$UserModelToJson(this);
-
-  /// Creates a [UserModel] from a [UserEntity]
+  factory UserModel.fromJson(DataMap json) {
+    return UserModel(
+      id: json['id'] as String,
+      email: json['email'] as String,
+      name: json['name'] as String,
+      role: json['role'] as String,
+      businessId: json['businessId'] as String?,
+    );
+  }
   factory UserModel.fromEntity(UserEntity entity) {
     return UserModel(
       id: entity.id,
@@ -31,10 +29,19 @@ class UserModel extends UserEntity {
       businessId: entity.businessId,
     );
   }
+
+  DataMap toJson() {
+    return {
+      'id': id,
+      'email': email,
+      'name': name,
+      'role': role,
+      'businessId': businessId,
+    };
+  }
 }
 
-/// Model for login response data
-@JsonSerializable()
+/// Plain JSON model for login response data
 class LoginResponseModel extends LoginResponseEntity {
   const LoginResponseModel({
     required super.user,
@@ -43,7 +50,6 @@ class LoginResponseModel extends LoginResponseEntity {
     required super.message,
   });
 
-  /// Creates a [LoginResponseModel] from JSON
   factory LoginResponseModel.fromJson(DataMap json) {
     return LoginResponseModel(
       user: UserModel.fromJson(json['user'] as DataMap),
@@ -53,8 +59,14 @@ class LoginResponseModel extends LoginResponseEntity {
     );
   }
 
-  /// Converts [LoginResponseModel] to JSON
-  DataMap toJson() => _$LoginResponseModelToJson(this);
+  DataMap toJson() {
+    return {
+      'user': (user as UserModel).toJson(),
+      'accessToken': accessToken,
+      'refreshToken': refreshToken,
+      'message': message,
+    };
+  }
 }
 
 /// Model for API response wrapper
@@ -64,10 +76,6 @@ class ApiResponseModel<T> {
     required this.data,
     this.message,
   });
-
-  final bool success;
-  final T data;
-  final String? message;
 
   /// Creates an [ApiResponseModel] from JSON
   factory ApiResponseModel.fromJson(
@@ -80,4 +88,8 @@ class ApiResponseModel<T> {
       message: json['message'] as String?,
     );
   }
+
+  final bool success;
+  final T data;
+  final String? message;
 }

@@ -7,9 +7,8 @@ import 'package:hireanythingbooking/feature/forgot_password/presentation/cubit/f
 
 /// Verify OTP button widget
 class OtpVerifyButton extends StatelessWidget {
+  const OtpVerifyButton({required this.onPressed, super.key});
   final VoidCallback onPressed;
-
-  const OtpVerifyButton({super.key, required this.onPressed});
 
   @override
   Widget build(BuildContext context) {

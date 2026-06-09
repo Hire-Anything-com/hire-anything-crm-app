@@ -36,7 +36,7 @@ class LeaveRepositoryImpl implements LeaveRepository {
         'ServerException during apply leave: ${e.message}',
       );
       return Left(ServerFailure(message: e.message, statusCode: e.statusCode));
-    } catch (e) {
+    } on Exception catch (e) {
       DebugLogger.error(
         'REPOSITORY',
         'Unexpected error during apply leave: $e',
@@ -58,7 +58,7 @@ class LeaveRepositoryImpl implements LeaveRepository {
         'ServerException during get my leaves: ${e.message}',
       );
       return Left(ServerFailure(message: e.message, statusCode: e.statusCode));
-    } catch (e) {
+    } on Exception catch (e) {
       DebugLogger.error(
         'REPOSITORY',
         'Unexpected error during get my leaves: $e',

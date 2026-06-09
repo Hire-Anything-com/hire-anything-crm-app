@@ -1,7 +1,7 @@
 import 'package:hireanythingbooking/core/utils/debug_logger.dart';
 import 'package:hireanythingbooking/core/utils/typedefs.dart';
-import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/domain/repositories/task_repository.dart';
 import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/data/model/task_model.dart';
+import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/domain/repositories/task_repository.dart';
 
 class GetMyAssignmentsUseCase {
   GetMyAssignmentsUseCase(this._repository);

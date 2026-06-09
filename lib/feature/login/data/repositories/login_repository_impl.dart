@@ -42,6 +42,20 @@ class LoginRepositoryImpl implements LoginRepository {
         refreshToken: response.refreshToken,
       );
 
+      // Save user profile locally
+      try {
+        await _localDataSource.saveUserProfile({
+          'id': response.user.id,
+          'email': response.user.email,
+          'name': response.user.name,
+          'role': response.user.role,
+          'businessId': response.user.businessId,
+        });
+        DebugLogger.repository('User profile persisted after login');
+      } on Exception catch (e) {
+        DebugLogger.error('REPOSITORY', 'Failed to persist user profile: $e');
+      }
+
       DebugLogger.repository('Tokens persisted after login');
       return Right(response);
     } on ServerException catch (e) {
@@ -51,7 +65,7 @@ class LoginRepositoryImpl implements LoginRepository {
             ' (status: ${e.statusCode})',
       );
       return Left(ServerFailure(message: e.message, statusCode: e.statusCode));
-    } catch (e) {
+    } on Exception catch (e) {
       DebugLogger.error('REPOSITORY', 'Unexpected error during login: $e');
       return Left(ServerFailure(message: e.toString()));
     }
@@ -64,7 +78,7 @@ class LoginRepositoryImpl implements LoginRepository {
       final refreshToken = await _localDataSource.getRefreshToken();
       if (refreshToken == null || refreshToken.isEmpty) {
         DebugLogger.error('REPOSITORY', 'Refresh token not found in storage');
-        return Left(ServerFailure(message: 'Refresh token not found'));
+        return const Left(ServerFailure(message: 'Refresh token not found'));
       }
 
       final newAccessToken = await _remoteDataSource.refreshAccessToken(
@@ -82,7 +96,7 @@ class LoginRepositoryImpl implements LoginRepository {
         'ServerException during token refresh: ${e.message}',
       );
       return Left(ServerFailure(message: e.message, statusCode: e.statusCode));
-    } catch (e) {
+    } on Exception catch (e) {
       DebugLogger.error(
         'REPOSITORY',
         'Unexpected error during token refresh: $e',
@@ -101,7 +115,7 @@ class LoginRepositoryImpl implements LoginRepository {
         try {
           await _remoteDataSource.logout(accessToken);
           DebugLogger.repository('Logout API call successful');
-        } catch (e) {
+        } on Exception catch (e) {
           // Log but don't fail — still clear tokens locally
           DebugLogger.error(
             'REPOSITORY',
@@ -111,9 +125,10 @@ class LoginRepositoryImpl implements LoginRepository {
       }
 
       await _localDataSource.clearTokens();
+      await _localDataSource.clearUserProfile();
       DebugLogger.repository('Logout completed — tokens cleared');
       return const Right(null);
-    } catch (e) {
+    } on Exception catch (e) {
       DebugLogger.error('REPOSITORY', 'Error during logout: $e');
       return Left(ServerFailure(message: e.toString()));
     }

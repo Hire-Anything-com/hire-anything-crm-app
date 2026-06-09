@@ -28,7 +28,7 @@ class ForgotPasswordRepositoryImpl implements ForgotPasswordRepository {
             ' (status: ${e.statusCode})',
       );
       return Left(ServerFailure(message: e.message, statusCode: e.statusCode));
-    } catch (e) {
+    } on Exception catch (e) {
       DebugLogger.error(
         'REPOSITORY',
         'Unexpected error during forgot password: $e',
@@ -59,7 +59,7 @@ class ForgotPasswordRepositoryImpl implements ForgotPasswordRepository {
             ' (status: ${e.statusCode})',
       );
       return Left(ServerFailure(message: e.message, statusCode: e.statusCode));
-    } catch (e) {
+    } on Exception catch (e) {
       DebugLogger.error(
         'REPOSITORY',
         'Unexpected error during reset password: $e',

@@ -1,3 +1,4 @@
+import 'package:hireanythingbooking/core/errors/failure.dart';
 import 'package:hireanythingbooking/core/utils/typedefs.dart';
 
 /// Abstract repository for forgot password operations

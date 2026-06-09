@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 /// Service for managing secure token storage
@@ -9,6 +11,7 @@ class SecureTokenStorage {
 
   static const String _accessTokenKey = 'access_token';
   static const String _refreshTokenKey = 'refresh_token';
+  static const String _userProfileKey = 'user_profile';
 
   /// Stores both access and refresh tokens
   Future<void> saveTokens({
@@ -42,6 +45,29 @@ class SecureTokenStorage {
       _secureStorage.delete(key: _accessTokenKey),
       _secureStorage.delete(key: _refreshTokenKey),
     ]);
+  }
+
+  /// Saves a user profile map as JSON in secure storage.
+  Future<void> saveUserProfile(Map<String, dynamic> profile) async {
+    final jsonStr = jsonEncode(profile);
+    await _secureStorage.write(key: _userProfileKey, value: jsonStr);
+  }
+
+  /// Retrieves the stored user profile as a map, or null if not present.
+  Future<Map<String, dynamic>?> getUserProfile() async {
+    final jsonStr = await _secureStorage.read(key: _userProfileKey);
+    if (jsonStr == null) return null;
+    try {
+      final decoded = jsonDecode(jsonStr) as Map<String, dynamic>;
+      return decoded;
+    } on Exception catch (_) {
+      return null;
+    }
+  }
+
+  /// Clears stored user profile
+  Future<void> clearUserProfile() async {
+    await _secureStorage.delete(key: _userProfileKey);
   }
 
   /// Checks if tokens exist

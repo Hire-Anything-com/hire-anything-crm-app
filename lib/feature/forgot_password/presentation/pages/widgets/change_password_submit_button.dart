@@ -6,9 +6,8 @@ import 'package:hireanythingbooking/feature/forgot_password/presentation/cubit/f
 
 /// Submit button widget for change password screen
 class ChangePasswordSubmitButton extends StatelessWidget {
+  const ChangePasswordSubmitButton({required this.onPressed, super.key});
   final VoidCallback onPressed;
-
-  const ChangePasswordSubmitButton({super.key, required this.onPressed});
 
   @override
   Widget build(BuildContext context) {

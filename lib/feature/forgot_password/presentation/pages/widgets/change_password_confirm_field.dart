@@ -11,18 +11,17 @@ import 'package:hugeicons/hugeicons.dart';
 
 /// Confirm password input field with visibility toggle
 class ChangePasswordConfirmField extends StatelessWidget {
+  const ChangePasswordConfirmField({
+    required this.controller,
+    required this.onToggleVisibility,
+    super.key,
+    this.validator,
+    this.onChanged,
+  });
   final TextEditingController controller;
   final String? Function(String?)? validator;
   final ValueChanged<String>? onChanged;
   final VoidCallback onToggleVisibility;
-
-  const ChangePasswordConfirmField({
-    super.key,
-    required this.controller,
-    this.validator,
-    this.onChanged,
-    required this.onToggleVisibility,
-  });
 
   @override
   Widget build(BuildContext context) {

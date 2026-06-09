@@ -1,17 +1,18 @@
 import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:hireanythingbooking/core/utils/debug_logger.dart';
-import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/presentation/cubit/task_state.dart';
-import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/domain/usecases/get_my_assignments_usecase.dart';
-import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/domain/usecases/respond_to_assignment_usecase.dart';
-import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/domain/usecases/get_assignment_details_usecase.dart';
-import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/domain/usecases/upload_task_photos_usecase.dart';
-import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/domain/usecases/complete_task_usecase.dart';
-import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/data/model/task_model.dart';
 import 'package:hireanythingbooking/core/di/service_locator.dart';
-import 'package:hireanythingbooking/feature/login/domain/usecases/login_usecase.dart';
 import 'package:hireanythingbooking/core/routes/router.dart';
 import 'package:hireanythingbooking/core/routes/routes.dart';
+import 'package:hireanythingbooking/core/utils/debug_logger.dart';
+import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/data/model/task_model.dart';
+import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/domain/usecases/complete_task_usecase.dart';
+import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/domain/usecases/get_assignment_details_usecase.dart';
+import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/domain/usecases/get_my_assignments_usecase.dart';
+import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/domain/usecases/respond_to_assignment_usecase.dart';
+import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/domain/usecases/upload_task_photos_usecase.dart';
+import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/presentation/cubit/task_state.dart';
+import 'package:hireanythingbooking/feature/login/domain/usecases/login_usecase.dart';
 
 class TaskCubit extends Cubit<TaskState> {
   TaskCubit({
@@ -53,12 +54,12 @@ class TaskCubit extends Cubit<TaskState> {
                 try {
                   final logoutUseCase = getIt<LogoutUseCase>();
                   await logoutUseCase();
-                } catch (e) {
+                } on Exception catch (e) {
                   DebugLogger.error('AUTH', 'Logout failed: $e');
                 }
                 try {
                   AppRouter.router.go(AppRoutes.login);
-                } catch (e) {
+                } on Exception catch (e) {
                   DebugLogger.error('AUTH', 'Navigation to login failed: $e');
                 }
                 // clear loading without showing retry UI

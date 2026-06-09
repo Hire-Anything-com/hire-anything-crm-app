@@ -36,7 +36,7 @@ class AppStrings {
   // Reset Password Email
   static const String resetPasswordTitle = 'Reset Password';
   static const String resetPasswordSubtitle =
-      'Enter your email address and we\'ll send you a verification code to reset your password.';
+      "Enter your email address and we'll send you a verification code to reset your password.";
   static const String sendVerificationCode = 'Send Verification Code';
   static const String sendingCode = 'Sending Code...';
 
@@ -75,7 +75,6 @@ class AppStrings {
       'Create a new password for your account';
 
   // Task
-  static const String taskTitle = 'Hi Feshan 👋';
 
   // Navigation
   static const String home = 'Home';

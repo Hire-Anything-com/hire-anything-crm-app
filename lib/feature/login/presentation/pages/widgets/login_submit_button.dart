@@ -7,9 +7,8 @@ import 'package:hireanythingbooking/feature/login/presentation/cubit/login_cubit
 
 /// Sign In submit button widget
 class LoginSubmitButton extends StatelessWidget {
+  const LoginSubmitButton({required this.onPressed, super.key});
   final VoidCallback onPressed;
-
-  const LoginSubmitButton({super.key, required this.onPressed});
 
   @override
   Widget build(BuildContext context) {

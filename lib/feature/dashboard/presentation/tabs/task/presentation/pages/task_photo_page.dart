@@ -1,8 +1,5 @@
 import 'dart:io';
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hireanythingbooking/core/core.dart';
-import 'package:hireanythingbooking/core/utils/cloudinary_service.dart';
 import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/presentation/cubit/task_cubit.dart';
 import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/presentation/cubit/task_state.dart';
 import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/presentation/pages/task_otp_page.dart';
@@ -23,11 +20,15 @@ class TaskPhotoPage extends StatelessWidget {
             prev.isUploadingPhotos && !curr.isUploadingPhotos,
         listener: (context, state) async {
           if (state.photoUploadError != null) {
-            AppSnackBar.show(
-              context,
-              message: state.photoUploadError!,
-              type: SnackBarType.error,
-            );
+            // Show error using ScaffoldMessenger captured from context
+            ScaffoldMessenger.of(context)
+              ..hideCurrentSnackBar()
+              ..showSnackBar(
+                SnackBar(
+                  content: Text(state.photoUploadError!),
+                  backgroundColor: AppColors.error,
+                ),
+              );
             return;
           }
 
@@ -36,9 +37,10 @@ class TaskPhotoPage extends StatelessWidget {
           final requireOtp =
               cubit.state.selectedAssignment?.task?.requireOtp ?? false;
           final navigator = Navigator.of(context);
+          final messenger = ScaffoldMessenger.of(context);
 
           if (requireOtp) {
-            navigator.pushReplacement(
+            await navigator.pushReplacement(
               MaterialPageRoute<void>(
                 builder: (_) => BlocProvider.value(
                   value: cubit,
@@ -52,11 +54,14 @@ class TaskPhotoPage extends StatelessWidget {
           // OTP not required — complete task immediately by sending empty otp
           final completed = await cubit.verifyOtp('');
           if (completed) {
-            AppSnackBar.show(
-              context,
-              message: 'Task completed successfully!',
-              type: SnackBarType.success,
-            );
+            messenger
+              ..hideCurrentSnackBar()
+              ..showSnackBar(
+                const SnackBar(
+                  content: Text('Task completed successfully!'),
+                  backgroundColor: AppColors.success,
+                ),
+              );
             navigator.popUntil((route) => route.isFirst);
           }
         },
@@ -82,7 +87,7 @@ class TaskPhotoPage extends StatelessWidget {
                   child: AnimatedSwitcher(
                     duration: const Duration(milliseconds: 300),
                     child: isUploading
-                        ? _PulsingCloudIcon(key: const ValueKey('uploading'))
+                        ? const _PulsingCloudIcon(key: ValueKey('uploading'))
                         : Container(
                             key: const ValueKey('idle'),
                             padding: const EdgeInsets.all(16),
@@ -177,8 +182,6 @@ class TaskPhotoPage extends StatelessWidget {
                                       border: Border.all(
                                         color: AppColors.primary.withAlpha(60),
                                         width: 1.5,
-                                        strokeAlign:
-                                            BorderSide.strokeAlignInside,
                                       ),
                                     ),
                                     child: Column(
@@ -337,7 +340,10 @@ class TaskPhotoPage extends StatelessWidget {
                       color: AppColors.primary.withAlpha(25),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Icon(AppIcons.camera, color: AppColors.primary),
+                    child: const Icon(
+                      AppIcons.camera,
+                      color: AppColors.primary,
+                    ),
                   ),
                   title: const Text('Camera'),
                   subtitle: const Text('Take a new photo'),
@@ -537,7 +543,7 @@ class _AddPhotoTile extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(AppIcons.add, color: AppColors.primary, size: 28),
+            const Icon(AppIcons.add, color: AppColors.primary, size: 28),
             AppSpacing.h4,
             Text(
               'Add',
@@ -772,7 +778,7 @@ class _AnimatedDotsState extends State<_AnimatedDots>
       animation: _ctrl,
       builder: (context, _) {
         final step = (_ctrl.value * _steps).floor();
-        final dots = '.' * (step % (_steps) + 1);
+        final dots = '.' * (step % _steps + 1);
         return Text(
           dots,
           style: AppTypography.bodySmall.copyWith(

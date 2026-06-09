@@ -1,41 +1,5 @@
-import 'package:dio/dio.dart';
-import 'package:get_it/get_it.dart';
-import 'package:hireanythingbooking/core/utils/debug_logger.dart';
-import 'package:hireanythingbooking/core/utils/network/interceptors/auth_interceptor.dart';
-import 'package:hireanythingbooking/core/routes/router.dart';
-import 'package:hireanythingbooking/core/routes/routes.dart';
-import 'package:hireanythingbooking/core/utils/storage/secure_token_storage.dart';
-import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/leave/data/datasources/leave_remote_datasource.dart';
-import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/leave/data/repositories/leave_repository_impl.dart';
-import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/leave/domain/repositories/leave_repository.dart';
-import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/leave/domain/usecases/apply_leave_usecase.dart';
-import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/leave/domain/usecases/get_my_leaves_usecase.dart';
-import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/leave/presentation/cubit/leave_cubit.dart';
-import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/data/datasources/task_remote_datasource.dart';
-import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/data/repositories/task_repository_impl.dart';
-import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/domain/repositories/task_repository.dart';
-import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/domain/usecases/complete_task_usecase.dart';
-import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/domain/usecases/get_assignment_details_usecase.dart';
-import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/domain/usecases/get_my_assignments_usecase.dart';
-import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/domain/usecases/respond_to_assignment_usecase.dart';
-import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/domain/usecases/upload_task_photos_usecase.dart';
-import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/presentation/cubit/task_cubit.dart';
-import 'package:hireanythingbooking/feature/forgot_password/data/datasources/forgot_password_remote_datasource.dart';
-import 'package:hireanythingbooking/feature/forgot_password/data/repositories/forgot_password_repository_impl.dart';
-import 'package:hireanythingbooking/feature/forgot_password/domain/repositories/forgot_password_repository.dart';
-import 'package:hireanythingbooking/feature/forgot_password/domain/usecases/forgot_password_usecase.dart';
-import 'package:hireanythingbooking/feature/login/data/datasources/login_local_datasource.dart';
-import 'package:hireanythingbooking/feature/login/data/datasources/login_remote_datasource.dart';
-import 'package:hireanythingbooking/feature/login/data/repositories/login_repository_impl.dart';
-import 'package:hireanythingbooking/feature/login/domain/repositories/login_repository.dart';
-import 'package:hireanythingbooking/feature/login/domain/usecases/login_usecase.dart';
-import 'package:hireanythingbooking/feature/login/presentation/presentation.dart';
-import 'package:hireanythingbooking/feature/add_task/presentation/cubit/add_task_cubit.dart';
-import 'package:hireanythingbooking/feature/add_task/domain/usecases/create_task_usecase.dart';
-import 'package:hireanythingbooking/feature/add_task/data/datasources/add_task_remote_datasource.dart';
-import 'package:hireanythingbooking/feature/add_task/data/repositories/add_task_repository_impl.dart';
-import 'package:hireanythingbooking/feature/add_task/domain/repositories/add_task_repository.dart';
-import 'package:hireanythingbooking/feature/add_task/domain/usecases/get_my_services_usecase.dart';
+import 'package:hireanythingbooking/core/di/di.dart';
+import 'package:hireanythingbooking/feature/login/domain/entities/login_entity.dart';
 
 final getIt = GetIt.instance;
 
@@ -107,7 +71,7 @@ class ServiceLocator {
             try {
               final logoutUseCase = getIt<LogoutUseCase>();
               await logoutUseCase();
-            } catch (e) {
+            } on Exception catch (e) {
               DebugLogger.error(
                 'AUTH',
                 'Logout during refresh-failure failed: $e',
@@ -116,7 +80,7 @@ class ServiceLocator {
 
             try {
               AppRouter.router.go(AppRoutes.login);
-            } catch (e) {
+            } on Exception catch (e) {
               DebugLogger.error('AUTH', 'Navigation to login failed: $e');
             }
           }
@@ -162,6 +126,35 @@ class ServiceLocator {
           logoutUseCase: getIt<LogoutUseCase>(),
         ),
       );
+
+    // Load cached user profile and tokens (if present) into LoginCubit
+    try {
+      final profile = await secureTokenStorage.getUserProfile();
+      final access = await secureTokenStorage.getAccessToken();
+      final refresh = await secureTokenStorage.getRefreshToken();
+
+      if (profile != null && access != null && refresh != null) {
+        final user = UserEntity(
+          id: profile['id'] as String,
+          email: profile['email'] as String,
+          name: profile['name'] as String,
+          role: profile['role'] as String,
+          businessId: profile['businessId'] as String?,
+        );
+
+        final loginResponse = LoginResponseEntity(
+          user: user,
+          accessToken: access,
+          refreshToken: refresh,
+          message: profile['message'] as String? ?? 'Cached login',
+        );
+
+        getIt<LoginCubit>().loadCachedLogin(loginResponse);
+        DebugLogger.core('Loaded cached login into LoginCubit');
+      }
+    } on Exception catch (e) {
+      DebugLogger.error('DI', 'Failed to load cached login: $e');
+    }
   }
 
   /// Clears all registered dependencies (useful for testing)

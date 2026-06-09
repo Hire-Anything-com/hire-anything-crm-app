@@ -2,20 +2,6 @@ import 'package:equatable/equatable.dart';
 import 'package:hireanythingbooking/feature/add_task/domain/entities/entities.dart';
 
 class AddTaskState extends Equatable {
-  final bool isLoading;
-  final bool isFormValid;
-  final bool isOtpRequired;
-  final bool isProofRequired;
-  final String bookingChannelSelected;
-  final String paymentStrategySelected;
-  final String currency;
-  final String subtotal;
-  final String tax;
-  final String total;
-  final List<ServiceItem> services;
-  final List<String> selectedServiceIds;
-  final int formResetKey;
-
   const AddTaskState({
     this.isLoading = false,
     this.isFormValid = false,
@@ -31,6 +17,19 @@ class AddTaskState extends Equatable {
     this.selectedServiceIds = const [],
     this.formResetKey = 0,
   });
+  final bool isLoading;
+  final bool isFormValid;
+  final bool isOtpRequired;
+  final bool isProofRequired;
+  final String bookingChannelSelected;
+  final String paymentStrategySelected;
+  final String currency;
+  final String subtotal;
+  final String tax;
+  final String total;
+  final List<ServiceItem> services;
+  final List<String> selectedServiceIds;
+  final int formResetKey;
 
   AddTaskState copyWith({
     bool? isLoading,

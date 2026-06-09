@@ -8,14 +8,13 @@ import 'package:hireanythingbooking/feature/forgot_password/presentation/pages/w
 
 /// Form card containing new password, confirm password, and submit button
 class ChangePasswordFormCard extends StatelessWidget {
-  final ForgotPasswordCubit cubit;
-  final VoidCallback onSubmit;
-
   const ChangePasswordFormCard({
-    super.key,
     required this.cubit,
     required this.onSubmit,
+    super.key,
   });
+  final ForgotPasswordCubit cubit;
+  final VoidCallback onSubmit;
 
   @override
   Widget build(BuildContext context) {

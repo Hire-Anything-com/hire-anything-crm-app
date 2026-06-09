@@ -1,6 +1,8 @@
-import 'package:flutter/material.dart';
+// Using a deprecated member intentionally for compatibility with
+// the project's targeted Flutter SDK; safe to ignore for now.
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/services.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hireanythingbooking/core/core.dart';
 import 'package:hireanythingbooking/feature/add_task/presentation/cubit/cubit.dart';
 
@@ -20,7 +22,7 @@ class AddTaskPage extends StatelessWidget {
             ),
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(16),
                 child: Form(
                   key: cubit.formKey,
                   child: Column(
@@ -190,8 +192,6 @@ class AddTaskPage extends StatelessWidget {
                                                       width: 18,
                                                       height: 18,
                                                       decoration: BoxDecoration(
-                                                        shape:
-                                                            BoxShape.rectangle,
                                                         borderRadius:
                                                             BorderRadius.circular(
                                                               4,
@@ -326,7 +326,7 @@ class AddTaskPage extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       elevation: 0,
       child: Padding(
-        padding: const EdgeInsets.all(12.0),
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -365,11 +365,13 @@ class AddTaskPage extends StatelessWidget {
                   controller: cubit.subtotalController,
                   labelText: 'Subtotal',
                   validator: (v) {
-                    if (v == null || v.trim().isEmpty)
+                    if (v == null || v.trim().isEmpty) {
                       return 'Subtotal is required';
+                    }
                     final val = double.tryParse(v.replaceAll(',', ''));
-                    if (val == null || val <= 0)
+                    if (val == null || val <= 0) {
                       return 'Enter a valid subtotal';
+                    }
                     return null;
                   },
                   keyboardType: const TextInputType.numberWithOptions(
@@ -431,7 +433,7 @@ class AddTaskPage extends StatelessWidget {
                 child: Row(
                   children: [
                     Text(
-                      state.currency + ' ',
+                      '${state.currency} ',
                       style: AppTypography.bodyMedium.copyWith(
                         color: AppColors.primary,
                         fontWeight: FontWeight.w700,
@@ -620,6 +622,7 @@ class AddTaskPage extends StatelessWidget {
                 lastDate: DateTime.now().add(const Duration(days: 365)),
               );
               if (pickedDate == null) return;
+              if (!context.mounted) return;
               final pickedTime = await showTimePicker(
                 context: context,
                 initialTime: TimeOfDay.now(),
@@ -645,6 +648,7 @@ class AddTaskPage extends StatelessWidget {
                 lastDate: DateTime.now().add(const Duration(days: 365)),
               );
               if (pickedDate == null) return;
+              if (!context.mounted) return;
               final pickedTime = await showTimePicker(
                 context: context,
                 initialTime: TimeOfDay.now(),

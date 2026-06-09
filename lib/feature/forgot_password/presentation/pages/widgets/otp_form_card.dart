@@ -8,10 +8,9 @@ import 'package:hireanythingbooking/feature/forgot_password/presentation/pages/w
 
 /// Form card containing OTP input, error message, and verify button
 class OtpFormCard extends StatelessWidget {
+  const OtpFormCard({required this.cubit, required this.onVerify, super.key});
   final ForgotPasswordCubit cubit;
   final VoidCallback onVerify;
-
-  const OtpFormCard({super.key, required this.cubit, required this.onVerify});
 
   @override
   Widget build(BuildContext context) {

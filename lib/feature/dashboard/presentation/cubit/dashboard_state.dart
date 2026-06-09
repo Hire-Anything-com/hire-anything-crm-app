@@ -1,9 +1,8 @@
 import 'package:equatable/equatable.dart';
 
 class DashboardState extends Equatable {
-  final int selectedIndex;
-
   const DashboardState({this.selectedIndex = 0});
+  final int selectedIndex;
 
   DashboardState copyWith({int? selectedIndex}) {
     return DashboardState(selectedIndex: selectedIndex ?? this.selectedIndex);
@@ -12,4 +11,3 @@ class DashboardState extends Equatable {
   @override
   List<Object?> get props => [selectedIndex];
 }
-

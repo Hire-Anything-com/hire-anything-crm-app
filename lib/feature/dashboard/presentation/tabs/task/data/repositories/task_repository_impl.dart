@@ -4,9 +4,9 @@ import 'package:hireanythingbooking/core/errors/failure.dart';
 import 'package:hireanythingbooking/core/utils/debug_logger.dart';
 import 'package:hireanythingbooking/core/utils/typedefs.dart';
 import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/data/datasources/task_remote_datasource.dart';
-import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/domain/repositories/task_repository.dart';
-import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/data/model/task_model.dart';
 import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/data/model/assignment_detail_model.dart';
+import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/data/model/task_model.dart';
+import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/domain/repositories/task_repository.dart';
 
 class TaskRepositoryImpl implements TaskRepository {
   TaskRepositoryImpl({required TaskRemoteDataSource remoteDataSource})
@@ -27,7 +27,7 @@ class TaskRepositoryImpl implements TaskRepository {
         'ServerException fetching assignments: ${e.message}',
       );
       return Left(ServerFailure(message: e.message, statusCode: e.statusCode));
-    } catch (e) {
+    } on Exception catch (e) {
       DebugLogger.error(
         'REPOSITORY',
         'Unexpected error fetching assignments: $e',
@@ -57,7 +57,7 @@ class TaskRepositoryImpl implements TaskRepository {
         'ServerException responding to assignment: ${e.message}',
       );
       return Left(ServerFailure(message: e.message, statusCode: e.statusCode));
-    } catch (e) {
+    } on Exception catch (e) {
       DebugLogger.error(
         'REPOSITORY',
         'Unexpected error responding to assignment: $e',
@@ -91,7 +91,7 @@ class TaskRepositoryImpl implements TaskRepository {
         'ServerException uploading task photos: ${e.message}',
       );
       return Left(ServerFailure(message: e.message, statusCode: e.statusCode));
-    } catch (e) {
+    } on Exception catch (e) {
       DebugLogger.error(
         'REPOSITORY',
         'Unexpected error uploading task photos: $e',
@@ -116,7 +116,7 @@ class TaskRepositoryImpl implements TaskRepository {
         'ServerException completing task: ${e.message}',
       );
       return Left(ServerFailure(message: e.message, statusCode: e.statusCode));
-    } catch (e) {
+    } on Exception catch (e) {
       DebugLogger.error('REPOSITORY', 'Unexpected error completing task: $e');
       return Left(ServerFailure(message: e.toString()));
     }
@@ -135,7 +135,7 @@ class TaskRepositoryImpl implements TaskRepository {
         'ServerException fetching assignment: ${e.message}',
       );
       return Left(ServerFailure(message: e.message, statusCode: e.statusCode));
-    } catch (e) {
+    } on Exception catch (e) {
       DebugLogger.error(
         'REPOSITORY',
         'Unexpected error fetching assignment: $e',

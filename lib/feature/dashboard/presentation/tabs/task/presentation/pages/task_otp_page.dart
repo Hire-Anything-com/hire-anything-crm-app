@@ -1,5 +1,3 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hireanythingbooking/core/core.dart';
 import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/presentation/cubit/task_cubit.dart';
 import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/presentation/cubit/task_state.dart';
@@ -63,7 +61,7 @@ class _TaskOtpPageState extends State<TaskOtpPage> {
                     color: AppColors.primary.withAlpha(25),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(
+                  child: const Icon(
                     AppIcons.lock,
                     color: AppColors.primary,
                     size: 40,

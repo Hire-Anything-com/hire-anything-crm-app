@@ -1,16 +1,14 @@
+// cSpell:ignore hireanythingbooking usecases usecase
 import 'dart:io';
-
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+// cSpell:ignore
 import 'package:hireanythingbooking/core/core.dart';
-import 'package:hireanythingbooking/core/utils/debug_logger.dart';
 import 'package:hireanythingbooking/core/extension/date_time_ext.dart';
-import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/presentation/cubit/task_cubit.dart';
-import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/presentation/cubit/task_state.dart';
 import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/data/model/assignment_detail_model.dart';
 import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/data/model/task_model.dart';
-import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/presentation/pages/task_photo_page.dart';
+import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/presentation/cubit/task_cubit.dart';
+import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/presentation/cubit/task_state.dart';
 import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/presentation/pages/task_otp_page.dart';
+import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/presentation/pages/task_photo_page.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class TaskDetailPage extends StatefulWidget {
@@ -27,6 +25,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (widget.taskId.isNotEmpty) {
+        // ignore: unawaited_futures -- initial fetch after first frame (fire-and-forget)
         context.read<TaskCubit>().fetchAssignmentDetails(widget.taskId);
       }
     });
@@ -45,9 +44,10 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
         final requireOtp = assignment?.task?.requireOtp ?? false;
 
         final navigator = Navigator.of(context);
+        final scaffoldMessenger = ScaffoldMessenger.of(context);
 
         if (requirePhotos) {
-          navigator.pushReplacement(
+          await navigator.pushReplacement(
             MaterialPageRoute<void>(
               builder: (_) => BlocProvider.value(
                 value: cubit,
@@ -70,17 +70,21 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
           endTime: endTime,
         );
         if (!photosOk) {
-          AppSnackBar.show(
-            context,
-            message: 'Failed submitting photos',
-            type: SnackBarType.error,
-          );
+          scaffoldMessenger
+            ..hideCurrentSnackBar()
+            ..showSnackBar(
+              const SnackBar(
+                content: Text('Failed submitting photos'),
+                backgroundColor: AppColors.error,
+                duration: Duration(seconds: 3),
+              ),
+            );
           return;
         }
 
         // If OTP required, navigate to OTP page; otherwise complete with empty otp
         if (requireOtp) {
-          navigator.pushReplacement(
+          await navigator.pushReplacement(
             MaterialPageRoute<void>(
               builder: (_) =>
                   BlocProvider.value(value: cubit, child: const TaskOtpPage()),
@@ -92,11 +96,15 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
         // Neither photos nor OTP required — complete task by sending empty otp
         final completed = await cubit.verifyOtp('');
         if (completed) {
-          AppSnackBar.show(
-            context,
-            message: 'Task completed successfully!',
-            type: SnackBarType.success,
-          );
+          scaffoldMessenger
+            ..hideCurrentSnackBar()
+            ..showSnackBar(
+              const SnackBar(
+                content: Text('Task completed successfully!'),
+                backgroundColor: AppColors.success,
+                duration: Duration(seconds: 3),
+              ),
+            );
           navigator.popUntil((route) => route.isFirst);
         }
       },
@@ -107,14 +115,14 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
         if (state.isLoading &&
             (state.selectedAssignment == null ||
                 state.selectedAssignment!.id != widget.taskId)) {
-          return Scaffold(
-            appBar: const AppAppBar(title: 'Task Details'),
-            body: const Center(child: CircularProgressIndicator()),
+          return const Scaffold(
+            appBar: AppAppBar(title: 'Task Details'),
+            body: Center(child: CircularProgressIndicator()),
           );
         }
         final isActive = state.activeTaskId == widget.taskId;
 
-        TaskStatus _parseStatus(String? value) {
+        TaskStatus parseStatus(String? value) {
           switch (value?.toUpperCase()) {
             case 'ACCEPTED':
               return TaskStatus.accepted;
@@ -130,7 +138,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
           }
         }
 
-        final statusEnum = _parseStatus(assignment.status);
+        final statusEnum = parseStatus(assignment.status);
 
         return Stack(
           children: [
@@ -209,7 +217,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
             // Background processing overlay when photos/otp calls are running
             if (state.isUploadingPhotos || state.isCompletingTask)
               Positioned.fill(
-                child: Container(
+                child: ColoredBox(
                   color: Colors.black45,
                   child: Center(
                     child: Container(
@@ -639,7 +647,7 @@ class _ServiceDetailChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(AppIcons.task, size: 14, color: AppColors.primary),
+          const Icon(AppIcons.task, size: 14, color: AppColors.primary),
           const SizedBox(width: 6),
           Text(
             label.toUpperCase(),
@@ -657,27 +665,3 @@ class _ServiceDetailChip extends StatelessWidget {
 }
 
 // ─── Payment Info Card ───────────────────────────────────────────────────────
-
-class _PaymentInfoCard extends StatelessWidget {
-  const _PaymentInfoCard({required this.assignment});
-  final AssignmentDetailModel assignment;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      shadowColor: AppColors.disabledBtnText,
-      child: Padding(
-        padding: AppSpacing.p16,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Payment Details', style: AppTypography.titleMedium),
-            AppSpacing.h12,
-            // The assignment endpoint doesn't return pricing fields in this model.
-            // If available in future, map them here from `assignment.task`.
-          ],
-        ),
-      ),
-    );
-  }
-}

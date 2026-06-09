@@ -1,16 +1,15 @@
+// cSpell:ignore hireanythingbooking usecases usecase
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'add_task_state.dart';
-import '../../domain/usecases/get_my_services_usecase.dart';
-import '../../domain/usecases/create_task_usecase.dart';
-import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/presentation/cubit/task_cubit.dart';
+import 'package:hireanythingbooking/feature/add_task/domain/usecases/create_task_usecase.dart';
+import 'package:hireanythingbooking/feature/add_task/domain/usecases/get_my_services_usecase.dart';
+import 'package:hireanythingbooking/feature/add_task/presentation/cubit/add_task_state.dart';
 import 'package:hireanythingbooking/feature/dashboard/presentation/cubit/dashboard_cubit.dart';
+import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/presentation/cubit/task_cubit.dart';
 
 class AddTaskCubit extends Cubit<AddTaskState> {
-  final GetMyServicesUseCase getMyServicesUseCase;
-  final CreateTaskUseCase createTaskUseCase;
-
   AddTaskCubit({
     required this.getMyServicesUseCase,
     required this.createTaskUseCase,
@@ -30,6 +29,9 @@ class AddTaskCubit extends Cubit<AddTaskState> {
     // fetch services from domain usecase
     fetchServices();
   }
+
+  final GetMyServicesUseCase getMyServicesUseCase;
+  final CreateTaskUseCase createTaskUseCase;
 
   final formKey = GlobalKey<FormState>();
   final clientNameController = TextEditingController();
@@ -102,7 +104,7 @@ class AddTaskCubit extends Cubit<AddTaskState> {
     try {
       final services = await getMyServicesUseCase();
       emit(state.copyWith(services: services));
-    } catch (e) {
+    } on Exception catch (e) {
       if (kDebugMode) debugPrint('fetchServices error: $e');
       emit(state.copyWith(services: []));
     }
@@ -151,10 +153,11 @@ class AddTaskCubit extends Cubit<AddTaskState> {
       final totalPrice = double.tryParse(state.total) ?? 0.0;
       final estimateMinutes = int.tryParse(durationController.text.trim()) ?? 0;
       // booking type mapping
-      String bookingType = state.bookingChannelSelected
-          .toUpperCase()
-          .replaceAll(' ', '_');
-      bookingType = bookingType.replaceAll(RegExp(r'[^A-Z0-9_]'), '_');
+      var bookingType = state.bookingChannelSelected.toUpperCase().replaceAll(
+        ' ',
+        '_',
+      );
+      bookingType = bookingType.replaceAll(RegExp('[^A-Z0-9_]'), '_');
       // payment mode mapping: detect ONLINE keyword
       final paymentMode =
           state.paymentStrategySelected.toUpperCase().contains('ONLINE')
@@ -162,7 +165,7 @@ class AddTaskCubit extends Cubit<AddTaskState> {
           : 'OFFLINE';
 
       // parse scheduledFor from dd/MM/yyyy HH:mm -> epoch seconds
-      int scheduledFor = 0;
+      var scheduledFor = 0;
       final rawDate = dateController.text.trim();
       if (rawDate.isNotEmpty) {
         try {
@@ -178,7 +181,7 @@ class AddTaskCubit extends Cubit<AddTaskState> {
           final minute = int.parse(timeParts[1]);
           final dt = DateTime(year, month, day, hour, minute);
           scheduledFor = dt.millisecondsSinceEpoch ~/ 1000;
-        } catch (_) {
+        } on Exception catch (_) {
           scheduledFor = 0;
         }
       }
@@ -212,46 +215,53 @@ class AddTaskCubit extends Cubit<AddTaskState> {
 
       await createTaskUseCase.call(payload);
 
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Task created successfully')),
-        );
-
-        // reset form state and clear controllers so validation messages disappear
-        formKey.currentState?.reset();
-
-        clientNameController.clear();
-        phoneController.clear();
-        emailController.clear();
-        addressController.clear();
-        postcodeController.clear();
-        dateController.clear();
-        durationController.clear();
-        currencyController.clear();
-        subtotalController.clear();
-        taxController.clear();
-
-        // mark not loading, clear selected services and bump formResetKey so fields rebuild without errors
-        emit(
-          state.copyWith(
-            isLoading: false,
-            isFormValid: false,
-            formResetKey: state.formResetKey + 1,
-            selectedServiceIds: [],
-          ),
-        );
-
-        // refresh task list and navigate to Tasks tab to show the created task
-        try {
-          final tc = context.read<TaskCubit>();
-          await tc.fetchMyAssignments();
-        } catch (_) {}
-
-        try {
-          context.read<DashboardCubit>().changeTab(0);
-        } catch (_) {}
+      if (!context.mounted) {
+        emit(state.copyWith(isLoading: false));
+        return;
       }
-    } catch (e) {
+
+      // Capture messenger and cubits before further awaits to avoid using BuildContext across async gaps.
+      final messenger = ScaffoldMessenger.of(context);
+      final tc = context.read<TaskCubit>();
+      final dashboardCubit = context.read<DashboardCubit>();
+
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Task created successfully')),
+      );
+
+      // reset form state and clear controllers so validation messages disappear
+      formKey.currentState?.reset();
+
+      clientNameController.clear();
+      phoneController.clear();
+      emailController.clear();
+      addressController.clear();
+      postcodeController.clear();
+      dateController.clear();
+      durationController.clear();
+      currencyController.clear();
+      subtotalController.clear();
+      taxController.clear();
+
+      // mark not loading, clear selected services and bump formResetKey so fields rebuild without errors
+      emit(
+        state.copyWith(
+          isLoading: false,
+          isFormValid: false,
+          formResetKey: state.formResetKey + 1,
+          selectedServiceIds: [],
+        ),
+      );
+
+      // refresh task list and navigate to Tasks tab to show the created task
+      try {
+        await tc.fetchMyAssignments();
+      } on Exception catch (_) {}
+
+      try {
+        dashboardCubit.changeTab(0);
+      } on Exception catch (_) {}
+    } on Exception catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(
           context,

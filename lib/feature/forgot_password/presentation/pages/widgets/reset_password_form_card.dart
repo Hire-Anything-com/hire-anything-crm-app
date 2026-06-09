@@ -7,14 +7,13 @@ import 'package:hireanythingbooking/feature/forgot_password/presentation/pages/w
 
 /// Form card containing email field and submit button for reset password
 class ResetPasswordFormCard extends StatelessWidget {
-  final ResetPasswordEmailCubit cubit;
-  final VoidCallback onSubmit;
-
   const ResetPasswordFormCard({
-    super.key,
     required this.cubit,
     required this.onSubmit,
+    super.key,
   });
+  final ResetPasswordEmailCubit cubit;
+  final VoidCallback onSubmit;
 
   @override
   Widget build(BuildContext context) {

@@ -1,10 +1,8 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hireanythingbooking/core/core.dart';
 import 'package:hireanythingbooking/core/extension/date_time_ext.dart';
+import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/data/model/task_model.dart';
 import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/presentation/cubit/task_cubit.dart';
 import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/presentation/cubit/task_state.dart';
-import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/data/model/task_model.dart';
 import 'package:hireanythingbooking/feature/dashboard/presentation/tabs/task/presentation/pages/task_detail_page.dart';
 
 class HistoryPage extends StatelessWidget {
@@ -129,7 +127,6 @@ class _HistoryTaskCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isInProgress = task.status == TaskStatus.inProgress;
     final isCompleted = task.status == TaskStatus.completed;
-    final isAssigned = task.status == TaskStatus.assigned;
 
     final statusColorLocal = switch (task.status) {
       TaskStatus.accepted => AppColors.success,
@@ -308,76 +305,6 @@ class _HistoryTaskCard extends StatelessWidget {
   }
 }
 
-class _InfoRow extends StatelessWidget {
-  const _InfoRow({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
-
-  final IconData icon;
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(icon, size: 18, color: AppColors.primary),
-        AppSpacing.w12,
-        SizedBox(
-          width: 80,
-          child: Text(
-            label,
-            style: AppTypography.bodySmall.copyWith(color: AppColors.textLight),
-          ),
-        ),
-        Expanded(child: Text(value, style: AppTypography.bodyMedium)),
-      ],
-    );
-  }
-}
-
-class _StatusChip extends StatelessWidget {
-  const _StatusChip({required this.status});
-  final TaskStatus? status;
-
-  @override
-  Widget build(BuildContext context) {
-    final label = switch (status) {
-      TaskStatus.assigned => 'Assigned',
-      TaskStatus.accepted => 'Accepted',
-      TaskStatus.inProgress => 'In Progress',
-      TaskStatus.completed => 'Completed',
-      TaskStatus.cancelled => 'Cancelled',
-      _ => 'Unknown',
-    };
-    final color = switch (status) {
-      TaskStatus.assigned => AppColors.primary,
-      TaskStatus.accepted => AppColors.success,
-      TaskStatus.inProgress => AppColors.secondary,
-      TaskStatus.completed => AppColors.success,
-      TaskStatus.cancelled => AppColors.error,
-      _ => AppColors.grey500,
-    };
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withAlpha(25),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        label,
-        style: AppTypography.labelSmall.copyWith(
-          color: color,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-}
-
 class _ServiceChip extends StatelessWidget {
   const _ServiceChip({required this.label});
 
@@ -395,7 +322,7 @@ class _ServiceChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(AppIcons.task, size: 12, color: AppColors.primary),
+          const Icon(AppIcons.task, size: 12, color: AppColors.primary),
           const SizedBox(width: 4),
           Text(
             label.toUpperCase(),

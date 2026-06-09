@@ -6,14 +6,13 @@ import 'package:hireanythingbooking/core/theme/app_typography.dart';
 
 /// Header widget with logo, title, and subtitle
 class LoginHeader extends StatelessWidget {
-  final double screenWidth;
-  final double screenHeight;
-
   const LoginHeader({
-    super.key,
     required this.screenWidth,
     required this.screenHeight,
+    super.key,
   });
+  final double screenWidth;
+  final double screenHeight;
 
   @override
   Widget build(BuildContext context) {

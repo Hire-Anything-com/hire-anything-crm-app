@@ -6,9 +6,8 @@ import 'package:hireanythingbooking/core/theme/app_typography.dart';
 
 /// Header widget with icon, title, and subtitle for change password screen
 class ChangePasswordHeader extends StatelessWidget {
+  const ChangePasswordHeader({required this.screenHeight, super.key});
   final double screenHeight;
-
-  const ChangePasswordHeader({super.key, required this.screenHeight});
 
   @override
   Widget build(BuildContext context) {

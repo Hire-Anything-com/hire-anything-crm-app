@@ -24,7 +24,7 @@ class DioClient {
         connectTimeout: connectTimeout,
         receiveTimeout: receiveTimeout,
         contentType: Headers.jsonContentType,
-        responseType: ResponseType.json,
+        // responseType defaults to ResponseType.json, omit explicit value
         validateStatus: (status) => true, // Don't throw on any status code
       )
       ..interceptors.clear()
