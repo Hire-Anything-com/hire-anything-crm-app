@@ -1,0 +1,14 @@
+default_platform(:android)
+
+platform :android do
+  desc "Upload QA AAB to Google Play"
+  lane :release_qa do
+    aab_path = "build/app/outputs/bundle/release/app-release.aab"
+    supply(
+      json_key: ENV['SERVICE_ACCOUNT_JSON_PATH'] || '/tmp/google-play-service-account.json',
+      package_name: 'com.hireanything.workerapp',
+      aab: aab_path,
+      track: ENV['RELEASE_TRACK'] || 'internal'
+    )
+  end
+end
