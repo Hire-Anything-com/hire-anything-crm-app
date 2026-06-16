@@ -44,6 +44,7 @@ dependencies:
   flutter_secure_storage: ^9.2.4
   flutter_svg: ^2.0.17
   dio: ^5.4.0
+  flutter_typeahead: ^4.0.0
 
   json_annotation: ^4.9.0
   pinput: ^6.0.2
