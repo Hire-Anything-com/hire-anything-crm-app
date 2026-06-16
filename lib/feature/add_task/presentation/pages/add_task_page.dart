@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hireanythingbooking/core/core.dart';
+import 'package:hireanythingbooking/core/data/postal_codes.dart';
 import 'package:hireanythingbooking/feature/add_task/presentation/cubit/cubit.dart';
 
 class AddTaskPage extends StatelessWidget {
@@ -113,6 +114,11 @@ class AddTaskPage extends StatelessWidget {
                                         ? 'Post code is required'
                                         : null,
                                     suffixIcon: const Icon(Icons.search),
+                                    keyboardType: TextInputType.number,
+                                    inputFormatters: [
+                                      FilteringTextInputFormatter.digitsOnly,
+                                    ],
+                                    suggestionsCallback: getPostalSuggestions,
                                   ),
                                 ),
                               ],
