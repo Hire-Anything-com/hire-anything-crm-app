@@ -231,6 +231,8 @@ class LoginRemoteDataSourceImpl implements LoginRemoteDataSource {
         message = 'Response timeout. Please try again.';
       case DioExceptionType.sendTimeout:
         message = 'Request timeout. Please try again.';
+      case DioExceptionType.transformTimeout:
+        message = 'Response processing timed out. Please try again.';
       case DioExceptionType.badResponse:
         message = responseMsg ?? 'An error occurred from server';
       case DioExceptionType.cancel:

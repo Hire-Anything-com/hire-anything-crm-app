@@ -44,14 +44,8 @@ class LoginResponseModel extends LoginResponseEntity {
   });
 
   /// Creates a [LoginResponseModel] from JSON
-  factory LoginResponseModel.fromJson(DataMap json) {
-    return LoginResponseModel(
-      user: UserModel.fromJson(json['user'] as DataMap),
-      accessToken: json['accessToken'] as String,
-      refreshToken: json['refreshToken'] as String,
-      message: json['message'] as String? ?? 'Login successful',
-    );
-  }
+  factory LoginResponseModel.fromJson(DataMap json) =>
+      _$LoginResponseModelFromJson(json);
 
   /// Converts [LoginResponseModel] to JSON
   DataMap toJson() => _$LoginResponseModelToJson(this);

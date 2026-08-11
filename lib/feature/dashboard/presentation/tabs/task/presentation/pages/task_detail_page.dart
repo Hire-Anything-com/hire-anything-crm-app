@@ -655,29 +655,3 @@ class _ServiceDetailChip extends StatelessWidget {
     );
   }
 }
-
-// ─── Payment Info Card ───────────────────────────────────────────────────────
-
-class _PaymentInfoCard extends StatelessWidget {
-  const _PaymentInfoCard({required this.assignment});
-  final AssignmentDetailModel assignment;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      shadowColor: AppColors.disabledBtnText,
-      child: Padding(
-        padding: AppSpacing.p16,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Payment Details', style: AppTypography.titleMedium),
-            AppSpacing.h12,
-            // The assignment endpoint doesn't return pricing fields in this model.
-            // If available in future, map them here from `assignment.task`.
-          ],
-        ),
-      ),
-    );
-  }
-}
