@@ -227,7 +227,7 @@ class AddTaskCubit extends Cubit<AddTaskState> {
         postcodeController.clear();
         dateController.clear();
         durationController.clear();
-        currencyController.clear();
+        currencyController.text = state.currency;
         subtotalController.clear();
         taxController.clear();
 

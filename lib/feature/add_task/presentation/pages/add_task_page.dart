@@ -109,14 +109,26 @@ class AddTaskPage extends StatelessWidget {
                                     ),
                                     controller: cubit.postcodeController,
                                     labelText: 'POSTCODE',
-                                    validator: (v) =>
-                                        v == null || v.trim().isEmpty
-                                        ? 'Post code is required'
-                                        : null,
+                                    validator: (v) {
+                                      if (v == null || v.trim().isEmpty) {
+                                        return 'Postcode is required';
+                                      }
+                                      return isValidUkPostcode(v)
+                                          ? null
+                                          : 'Enter a valid UK postcode';
+                                    },
                                     suffixIcon: const Icon(Icons.search),
-                                    keyboardType: TextInputType.number,
+                                    keyboardType: TextInputType.text,
                                     inputFormatters: [
-                                      FilteringTextInputFormatter.digitsOnly,
+                                      FilteringTextInputFormatter.allow(
+                                        RegExp(r'[A-Za-z0-9 ]'),
+                                      ),
+                                      TextInputFormatter.withFunction(
+                                        (oldValue, newValue) =>
+                                            newValue.copyWith(
+                                              text: newValue.text.toUpperCase(),
+                                            ),
+                                      ),
                                     ],
                                     suggestionsCallback: getPostalSuggestions,
                                   ),

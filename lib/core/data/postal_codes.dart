@@ -1,89 +1,35 @@
-// Small postal code dataset and suggestion helper
+// Small UK postcode dataset and suggestion helper.
 import 'dart:async';
 
-const List<String> _laZipCodes = [
-  '90001',
-  '90002',
-  '90003',
-  '90004',
-  '90005',
-  '90006',
-  '90007',
-  '90008',
-  '90010',
-  '90011',
-  '90012',
-  '90013',
-  '90014',
-  '90015',
-  '90016',
-  '90017',
-  '90018',
-  '90019',
-  '90020',
-  '90021',
-  '90022',
-  '90023',
-  '90024',
-  '90025',
-  '90026',
-  '90027',
-  '90028',
-  '90029',
-  '90030',
-  '90031',
+const List<String> _ukPostcodes = [
+  'SW1A 1AA', // Westminster
+  'EC1A 1BB', // Central London
+  'W1A 0AX', // West End
+  'M1 1AE', // Manchester
+  'B1 1AA', // Birmingham
+  'LS1 1UR', // Leeds
+  'L1 8JQ', // Liverpool
+  'G1 1XQ', // Glasgow
+  'EH1 1YZ', // Edinburgh
+  'CF10 1EP', // Cardiff
+  'BT1 5GS', // Belfast
 ];
 
-const List<String> _usZipCodes = [
-  '10001', // New York
-  '10002',
-  '10003',
-  '02108', // Boston
-  '30301', // Atlanta
-  '33101', // Miami
-  '60601', // Chicago
-  '73301', // Austin
-  '94102', // San Francisco
-  '85001', // Phoenix
-  '75201', // Dallas
-  '20001', // Washington DC
-  '02215', // Boston (Back-up)
-  '32801', // Orlando
-  '37201', // Nashville
-  '80201', // Denver
-  '07201',
-  '30303',
-  '37203',
-  '98101', // Seattle
-];
+final RegExp _ukPostcodePattern = RegExp(
+  r'^(?:GIR ?0AA|[A-Z]{1,2}\d[A-Z\d]? ?\d[A-Z]{2})$',
+  caseSensitive: false,
+);
 
-/// Returns up to 3 postal code suggestions for the given [query].
-///
-/// Behavior:
-/// - If [query] contains letters and matches "la" or "los", returns LA zips.
-/// - If [query] contains digits, returns zip codes that start with the query.
-/// - Always returns at most 3 suggestions.
+/// Whether [postcode] is a valid UK postcode in a standard outward/inward form.
+bool isValidUkPostcode(String postcode) =>
+    _ukPostcodePattern.hasMatch(postcode.trim());
+
+/// Returns up to 3 UK postcode suggestions matching the start of [query].
 FutureOr<Iterable<String>> getPostalSuggestions(String query) {
-  final q = query.trim();
+  final q = query.trim().toUpperCase().replaceAll(' ', '');
   if (q.isEmpty) return const [];
 
-  final isAlpha = RegExp(r'[A-Za-z]').hasMatch(q);
-  if (isAlpha) {
-    final lower = q.toLowerCase();
-    if (lower.contains('la') || lower.contains('los')) {
-      return _laZipCodes.take(3);
-    }
-    // unknown letters -> no suggestions
-    return const [];
-  }
-
-  // digits: match zips starting with the input
-  final all = <String>[..._laZipCodes, ..._usZipCodes];
-  final matches = all.where((z) => z.startsWith(q)).toList();
-  if (matches.isEmpty) {
-    // fallback: contains
-    final containsMatches = all.where((z) => z.contains(q)).toList();
-    return containsMatches.take(3);
-  }
-  return matches.take(3);
+  return _ukPostcodes
+      .where((postcode) => postcode.replaceAll(' ', '').startsWith(q))
+      .take(3);
 }

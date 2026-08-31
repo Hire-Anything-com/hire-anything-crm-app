@@ -23,7 +23,7 @@ class AddTaskState extends Equatable {
     this.isProofRequired = false,
     this.bookingChannelSelected = 'Call',
     this.paymentStrategySelected = 'Offline Settlement',
-    this.currency = 'USD',
+    this.currency = 'GBP',
     this.subtotal = '0',
     this.tax = '0',
     this.total = '0.00',
